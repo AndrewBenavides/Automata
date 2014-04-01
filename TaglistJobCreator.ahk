@@ -1,13 +1,14 @@
-﻿; Includes for RemoteTreeView
-#Include C:\Temp\TaglistJobCreator\Const_TreeView.ahk
-#Include C:\Temp\TaglistJobCreator\Const_Process.ahk
-#Include C:\Temp\TaglistJobCreator\Const_Memory.ahk
-#Include C:\Temp\TaglistJobCreator\RemoteTreeViewClass.ahk
-
-#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  ; Recommended for catching common errors.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+
+; Includes for RemoteTreeView
+#Include %A_ScriptDir%\Const_TreeView.ahk
+#Include %A_ScriptDir%\Const_Process.ahk
+#Include %A_ScriptDir%\Const_Memory.ahk
+#Include %A_ScriptDir%\RemoteTreeViewClass.ahk
+
 
 DetectHiddenText On
 DetectHiddenWindows On
