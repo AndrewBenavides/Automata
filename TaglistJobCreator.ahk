@@ -35,21 +35,6 @@ GetClients() {
 	return clients
 }
 
-GetProjects(tree, parentItem) {
-	projects := {}
-
-	item := tree.GetChild(parentItem)
-	while item <> 0 {
-		project := new Project(tree, item)
-		if (project.IsValid() = true) {
-			projects[project.Name] := project
-		}
-		
-		item := tree.GetNext(item)
-	}
-	return projects
-}
-
 class BaseClass {
 	__Delete() {
 		DllCall("GlobalFree", "ptr", this.ptr)
@@ -58,16 +43,36 @@ class BaseClass {
 
 class Client extends BaseClass {
 	__New(tree, item) {
+		this.Tree := tree
 		this.Name := tree.GetText(item)
 		this.Item := item
-		this.Projects := GetProjects(tree, item)
+		this.Projects := this.GetProjects()
+	}
+	
+	GetProjects() {
+		projects := {}
+
+		item := this.Tree.GetChild(this.Item)
+		while item <> 0 {
+			project := new Project(this.Tree, item)
+			if (project.IsValid() = true) {
+				projects[project.Name] := project
+			}
+			
+			item := this.Tree.GetNext(item)
+		}
+		return projects
 	}
 }
 
 class Project extends BaseClass {
 	__New(tree, item) {
+		this.Tree := tree
 		this.Name := tree.GetText(item)
 		this.Item := item
+		if this.IsValid() {
+			this.Custodians := this.GetCustodians()
+		}
 	}
 	
 	IsValid() {
@@ -75,6 +80,36 @@ class Project extends BaseClass {
 		if (this.Name = "Export Jobs") {
 			valid := false
 		}
+		if (this.Name = "Dummy") {
+			valid := false
+		}
+		return valid
+	}
+	
+	GetCustodians() {
+		custodians := {}
+		
+		item := this.Tree.GetChild(this.Item)
+		while item <> 0 {
+			custodian := new Custodian(this.Tree, item)
+			if custodian.IsValid() {
+				MsgBox % custodian.Name
+			}
+			
+			item := this.Tree.GetNext(item)
+		}
+	}
+}
+
+class Custodian extends BaseClass {
+	__New(tree, item) {
+		this.Tree := tree
+		this.Name := tree.GetText(item)
+		this.Item := item
+	}
+	
+	IsValid() {
+		valid := true
 		if (this.Name = "Dummy") {
 			valid := false
 		}
