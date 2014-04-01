@@ -20,6 +20,31 @@ global xl := ComObjActive("Excel.Application")
 global ecaptureHwnd := WinExist("eCapture Controller")
 global eCapture := "ahk_id " . ecaptureHwnd
 global tv := "WindowsForms10.SysTreeView32.app.0.11ecf051"
+global col_JobName := 1
+global col_Status := 2
+global cell_TaglistDir := "$B$2"
+global worksheet := xl.ActiveSheet
+
+class LogEntry {
+	__New(row) {
+		this.RowNumber := row
+		this.JobName := worksheet.Cells(row, col_JobName).Value2
+		this.Custodian := this.ParseCustodian(this.JobName)
+		this.TaglistName := this.JobName . ".txt"
+		this.StatusCell := worksheet.Cells(row, col_Status)
+	}
+	
+	ParseCustodian(jobName) {
+		StringSplit, parts, jobName, _
+		name := parts2
+		return name
+	}
+	
+	SetStatus(message, colorIndex) {
+		this.StatusCell.Value2 := message
+		this.StatusCell.Interior.ColorIndex := colorIndex
+	}
+}
 
 class BaseClass {
 	__New(tree, item) {
@@ -135,5 +160,3 @@ class Job extends BaseClass {
 }
 
 ^+t::
-	test := new Controller()
-	MsgBox % test.Clients["3M 02"].Projects["3CPS3"].Custodians["Allen Karen"].DiscoveryJobs["004_Allen Karen_006-EMAIL"].NodeName
