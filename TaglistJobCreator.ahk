@@ -20,21 +20,6 @@ global ecaptureHwnd := WinExist("eCapture Controller")
 global eCapture := "ahk_id " . ecaptureHwnd
 global tv := "WindowsForms10.SysTreeView32.app.0.11ecf051"
 
-GetClients() {
-	clients := {}
-	
-	ControlGet TVId, Hwnd, , % tv, % ecapture
-	tree := new RemoteTreeView(TVId)
-	item := tree.GetRoot()
-	while item <> 0 {
-		client := new Client(tree, item)
-		clients[client.Name] := client
-		
-		item := tree.GetNext(item)
-	}
-	return clients
-}
-
 class BaseClass {
 	__New(tree, item) {
 		this.Tree := tree
