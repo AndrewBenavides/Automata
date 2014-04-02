@@ -25,33 +25,45 @@ global col_JobName := 1
 global col_Status := 2
 global col_TaglistCount := 3
 global col_AddedCount := 4
-
 global cell_TaglistDir := "$B$1"
-global worksheet := xl.ActiveSheet
-global taglistDir := worksheet.Range(cell_TaglistDir).Value2
+
+class JobLog {
+	__New() {
+		this.Xl := ComObjActive("Excel.Application")
+		this.Worksheet := xl.ActiveSheet
+		this.TaglistDir := this.Worksheet.Range(cell_TaglistDir).Value2
+	}
+	
+	GetEntries() {
+		entries := {}
+		rowOffset := 2
+		rowCount := this.Worksheet.UsedRange.Rows.Count - rowOffset
+		
+		loop % rowCount {
+			row := A_Index + rowOffset
+			entry := new LogEntry(this, row)
+			
+			if !entry.IsComplete() {
+				entries[entry.JobName] := entry
+			}
+		}
+		return entries
+	}
+}
 
 class LogEntry {
-	__New(row) {
+	__New(jobLog, row) {
 		this.RowNumber := row
-		this.JobName := worksheet.Cells(row, col_JobName).Value2
+		this.JobLog := jobLog
+		this.Worksheet := this.JobLog.Worksheet
+		this.JobName := this.Worksheet.Cells(row, col_JobName).Value2
 		this.Custodian := this.ParseCustodian(this.JobName)
 		this.TaglistName := this.JobName . ".txt"
-		this.TaglistFullName := taglistDir . "\" . this.TaglistName
+		this.TaglistFullName := this.JobLog.TaglistDir . "\" . this.TaglistName
 		
-		this.StatusCell := worksheet.Cells(row, col_Status)
-		this.TaglistCountCell := worksheet.Cells(row, col_TaglistCount)
-		this.AddedCountCell := worksheet.Cells(row, col_AddedCount)
-	}
-	
-	ParseCustodian(jobName) {
-		StringSplit, parts, jobName, _
-		name := parts2
-		return name
-	}
-	
-	SetStatus(message, colorIndex) {
-		this.StatusCell.Value2 := message
-		this.StatusCell.Interior.ColorIndex := colorIndex
+		this.StatusCell := this.Worksheet.Cells(row, col_Status)
+		this.TaglistCountCell := this.Worksheet.Cells(row, col_TaglistCount)
+		this.AddedCountCell := this.Worksheet.Cells(row, col_AddedCount)
 	}
 	
 	GetTaglistCount() {
@@ -70,6 +82,26 @@ class LogEntry {
 			output := "File does not exist."
 		}
 		return output
+	}
+	
+	IsComplete() {
+		statusMessage := this.StatusCell.Value2
+		if (statusMessage <> "") {
+			return true
+		} else {
+			return false
+		}
+	}
+	
+	ParseCustodian(jobName) {
+		StringSplit, parts, jobName, _
+		name := parts2
+		return name
+	}
+	
+	SetStatus(message, colorIndex) {
+		this.StatusCell.Value2 := message
+		this.StatusCell.Interior.ColorIndex := colorIndex
 	}
 	
 	SetAddedCount(itemCount) {
