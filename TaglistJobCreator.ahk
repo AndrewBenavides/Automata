@@ -20,10 +20,15 @@ global xl := ComObjActive("Excel.Application")
 global ecaptureHwnd := WinExist("eCapture Controller")
 global eCapture := "ahk_id " . ecaptureHwnd
 global tv := "WindowsForms10.SysTreeView32.app.0.11ecf051"
+
 global col_JobName := 1
 global col_Status := 2
-global cell_TaglistDir := "$B$2"
+global col_TaglistCount := 3
+global col_AddedCount := 4
+
+global cell_TaglistDir := "$B$1"
 global worksheet := xl.ActiveSheet
+global taglistDir := worksheet.Range(cell_TaglistDir).Value2
 
 class LogEntry {
 	__New(row) {
@@ -31,7 +36,11 @@ class LogEntry {
 		this.JobName := worksheet.Cells(row, col_JobName).Value2
 		this.Custodian := this.ParseCustodian(this.JobName)
 		this.TaglistName := this.JobName . ".txt"
+		this.TaglistFullName := taglistDir . "\" . this.TaglistName
+		
 		this.StatusCell := worksheet.Cells(row, col_Status)
+		this.TaglistCountCell := worksheet.Cells(row, col_TaglistCount)
+		this.AddedCountCell := worksheet.Cells(row, col_AddedCount)
 	}
 	
 	ParseCustodian(jobName) {
@@ -43,6 +52,41 @@ class LogEntry {
 	SetStatus(message, colorIndex) {
 		this.StatusCell.Value2 := message
 		this.StatusCell.Interior.ColorIndex := colorIndex
+	}
+	
+	GetTaglistCount() {
+		output := ""
+		itemCount := 0
+		if this.TaglistExists() {
+			FileRead, contents, % this.TaglistFullName
+			Loop, parse, contents, `n, `r 
+			{
+				if (A_LoopField <> "") {
+					itemCount := itemCount + 1
+				}
+			}
+			output := itemCount
+		} else {
+			output := "File does not exist."
+		}
+		return output
+	}
+	
+	SetAddedCount(itemCount) {
+		this.AddedCountCell.Value2 := itemCount
+	}
+	
+	SetTaglistCount(itemCount) {
+		this.TaglistCountCell.Value2 := itemCount
+	}
+	
+	TaglistExists() {
+		FileGetSize, size, % this.TaglistFullName
+		if (size > 0) {
+			return true
+		} else {
+			return false
+		}
 	}
 }
 
