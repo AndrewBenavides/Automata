@@ -25,7 +25,9 @@ global col_JobName := 1
 global col_Status := 2
 global col_TaglistCount := 3
 global col_AddedCount := 4
-global cell_TaglistDir := "$B$1"
+global cell_Client := "$B$1"
+global cell_Project := "$B$2"
+global cell_TaglistDir := "$B$3"
 
 class JobLog {
 	__New() {
@@ -36,7 +38,7 @@ class JobLog {
 	
 	GetEntries() {
 		entries := {}
-		rowOffset := 2
+		rowOffset := 5
 		rowCount := this.Worksheet.UsedRange.Rows.Count - rowOffset
 		
 		loop % rowCount {
