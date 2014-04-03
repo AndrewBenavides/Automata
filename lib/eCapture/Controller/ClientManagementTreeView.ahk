@@ -7,6 +7,69 @@
 ;Includes from lib
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
 
+class LazilyLoadedTreeViewNode {
+	__New(tree, item, typeName) {
+		this.IsLoaded := false
+		this.Tree := tree
+		this.Item := item
+		this.TypeName := typeName
+	}
+	
+	__Get(key) {
+		if !this.IsLoaded {
+			this.Expand()
+			this.GetChildren()
+			this.IsLoaded := true
+		}
+		return this[key]
+	}
+	
+	Collapse() {
+		this.Tree.Expand(this.item, false)
+		this.DestroyValues()
+		this.IsLoaded := false
+	}
+	
+	DestroyValues() {
+		keys := {}
+		for key, value in this {
+			keys.Add(key)
+		}
+		for key in keys {
+			this.Remove(key)
+		}
+	}
+	
+	Expand() {
+		this.Tree.Expand(this.item, true)
+	}
+	
+	GetChildren() {
+		item := this.Tree.GetChild(this.Item)
+		while item <> 0 {
+			if (this.TypeName = "Client") {
+				child := new Client(this.Tree, item)
+			}
+			if (this.TypeName = "Project") {
+				child := new Project(this.Tree, item)
+			}
+			if (this.TypeName = "Custodian") {
+				child := new Custodian(this.Tree, item)
+			}
+			if (this.TypeName = "JobFolder") {
+				child := new JobFolder(this.Tree, item)
+			}
+			if (this.TypeName = "Job") {
+				child := new Job(this.Tree, item)
+			}
+			if child.IsValid() {
+				this[child.Name] := child
+			}
+			item := this.Tree.GetNext(item)
+		}
+	}
+}
+
 class BaseClass {
 	__New(tree, item) {
 		this.Tree := tree
@@ -32,30 +95,7 @@ class BaseClass {
 	}
 	
 	GetChildren(typeName) {
-		children := {}
-		
-		item := this.Tree.GetChild(this.Item)
-		while item <> 0 {
-			if (typeName = "Client") {
-				child := new Client(this.Tree, item)
-			}
-			if (typeName = "Project") {
-				child := new Project(this.Tree, item)
-			}
-			if (typeName = "Custodian") {
-				child := new Custodian(this.Tree, item)
-			}
-			if (typeName = "JobFolder") {
-				child := new JobFolder(this.Tree, item)
-			}
-			if (typeName = "Job") {
-				child := new Job(this.Tree, item)
-			}
-			if child.IsValid() {
-				children[child.Name] := child
-			}
-			item := this.Tree.GetNext(item)
-		}
+		children := new LazilyLoadedTreeViewNode(this.Tree, this.Item, typeName)
 		return children
 	}
 	
