@@ -9,6 +9,7 @@ class Control {
 		this.WindowId := windowId
 		this.ControlClass := controlClass
 		this.ControlId := GetControlHwnd(this.WindowId, this.ControlClass)
+		this.Extend()
 	}
 }
 
@@ -36,6 +37,52 @@ class CheckBox extends CheckableControl {
 		} else {
 			Control, Uncheck, , % this.ControlClass, % this.WindowId
 		}
+	}
+}
+
+class DropDownBox extends Control {
+	Extend() {
+		this.Choices := this.GetChoices()
+	}
+	
+	FindIndex(value) {
+		for key, choice in this.Choices {
+			if (choice = value) {
+				return key
+			}
+		}
+		return -1
+	}
+	
+	Get() {
+		ControlGet, value, Choice, , , % this.ControlId
+		return value
+	}
+	
+	GetChoices() {
+		choices := {}
+		ControlGet, contents, List, , , % this.ControlId
+		loop, parse, contents, `n 
+		{
+			index := A_Index
+			choices[index] := A_LoopField
+		}
+		return choices
+	}
+	
+	GetIndex() {
+		;SendMessage, 0x147, 0, 0, , % this.ControlId
+		;return ErrorLevel
+		this.FindIndex(this.Get())
+	}
+	
+	Set(value) {
+		index := this.FindIndex(value)
+		this.SetIndex(index)
+	}
+	
+	SetIndex(index) {
+		Control, Choose, % index, , % this.ControlId
 	}
 }
 
