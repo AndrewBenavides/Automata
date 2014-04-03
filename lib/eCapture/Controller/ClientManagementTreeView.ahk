@@ -179,7 +179,6 @@ class Custodian extends BaseClass {
 		
 		countWdw := new ImportFromFileWindow()
 		fileCount := countWdw.GetCount()
-		MsgBox % fileCount
 		
 		WinWait, % "Options for Processing Job", % "General Options", 10
 		handle := "ahk_id " . WinExist("Options for Processing Job")

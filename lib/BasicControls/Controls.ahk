@@ -31,12 +31,20 @@ class Button extends Control {
 }
 
 class CheckBox extends CheckableControl {
+	Check() {
+		this.Set(true)
+	}
+
 	Set(value) {
 		if (value) { 
 			Control, Check, , % this.ControlClass, % this.WindowId
 		} else {
 			Control, Uncheck, , % this.ControlClass, % this.WindowId
 		}
+	}
+	
+	Uncheck() {
+		this.Set(false)
 	}
 }
 
@@ -158,5 +166,11 @@ class TextBox extends Control {
 		if (setValue <> value) {
 			throw "Error: value was not able to be set."
 		}
+	}
+}
+
+class ToolStrip extends Control {
+	Click(xCoor, yCoor) {
+		ControlClick, , % this.ControlId, , , , NA X%xCoor% Y%yCoor%
 	}
 }
