@@ -6,6 +6,9 @@
 
 ;Includes from lib
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
+#Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
+#Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
+#Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
 
 class LazilyLoadedTreeViewNode {
 	__New(tree, item, typeName) {
@@ -164,15 +167,28 @@ class Custodian extends BaseClass {
 		SendInput {Up}
 		SendInput {Enter}
 		WinWait, % "Processing Job", % "Task Table", 10
-		handle := "ahk_id" . WinExist("Processing Job")
+		handle := "ahk_id " . WinExist("Processing Job")
 		processJobWdw := new NewProcessJobWindow(handle, "DataExtractImport")
 		
 		processJobWdw.Name.Set(options.Name)
 		processJobWdw.ItemIdFilePath.Set(options.FilePath)
 		processJobWdw.SelectChildren.Set(options.SelectChildren)
 		processJobWdw.ChildItemHandling[options.ChildItemHandling].Set()
-		Sleep 10
+		Sleep 250
 		processJobWdw.OkButton.Click()
+		
+		countWdw := new ImportFromFileWindow()
+		fileCount := countWdw.GetCount()
+		MsgBox % fileCount
+		
+		WinWait, % "Options for Processing Job", % "General Options", 10
+		handle := "ahk_id " . WinExist("Options for Processing Job")
+		settingsWdw := new ProcessingJobOptionsWindow(handle)
+		settingsWdw.TabControl.Set(4)
+		settingsWdw.ManageFlexProcessorButton.Click()
+		
+		Sleep 2500
+		settingsWdw.OkButton.Click()
 	}
 }
 

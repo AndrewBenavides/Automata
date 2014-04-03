@@ -3,6 +3,7 @@
 class NewProcessJobWindow {
 	__New(windowId, processJobType) {
 		this.WindowId := windowId
+		
 		if (processJobType = "DataExtractImport") {
 			this.SwitchToDataExtractImport()
 		}

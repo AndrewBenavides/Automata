@@ -6,7 +6,8 @@ DetectHiddenWindows On
 SetTitleMatchMode 2
 SetTitleMatchMode Slow
 SendMode Input
-SetKeyDelay 75, 75
+SetControlDelay -1
+SetKeyDelay 125, 125
 
 ; Includes from lib
 #Include %A_ScriptDir%

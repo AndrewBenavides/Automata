@@ -1,7 +1,14 @@
-﻿class Control {
+﻿GetControlHwnd(windowId, controlClass) {
+	ControlGet, controlHwnd, Hwnd, , % controlClass, % windowId
+	controlHwnd := "ahk_id " . controlHwnd
+	return controlHwnd
+}
+
+class Control {
 	__New(windowId, controlClass) {
 		this.WindowId := windowId
 		this.ControlClass := controlClass
+		this.ControlId := GetControlHwnd(this.WindowId, this.ControlClass)
 	}
 }
 
@@ -18,7 +25,7 @@ class CheckableControl extends Control {
 
 class Button extends Control {
 	Click() {
-		ControlClick, % this.ControlClass, % this.WindowId
+		ControlClick, % this.ControlClass, % this.WindowId, , , , NA
 	}
 }
 
@@ -29,6 +36,13 @@ class CheckBox extends CheckableControl {
 		} else {
 			Control, Uncheck, , % this.ControlClass, % this.WindowId
 		}
+	}
+}
+
+class Label extends Control {
+	Get() {
+		ControlGetText, value, , % this.ControlId
+		return value
 	}
 }
 
@@ -49,6 +63,23 @@ class RadioButtons {
 class RadioButton extends CheckableControl {
 	Set() {
 		Control, Check, , % this.ControlClass, % this.WindowId
+	}
+}
+
+class TabControl extends Control {
+	Count() {
+		SendMessage, 0x1304,,, % this.ControlClass, % this.WindowId  ; 0x1304 is TCM_GETITEMCOUNT.
+		TabCount = %ErrorLevel%
+	}
+	
+	Get() {
+		ControlGet, selected, Tab, , % this.ControlClass, % this.WindowId
+		return selected
+	}
+	
+	Set(value) {
+		SendMessage, 0x1330, % value, , % this.ControlClass, % this.WindowId
+		SendMessage, 0x130C, % value, , % this.ControlClass, % this.WindowId
 	}
 }
 
