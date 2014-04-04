@@ -17,9 +17,12 @@ class FlexProcessorOptionsWindow {
 		this.ProcessJobDuplicatesScope := new DropDownBox(this.WindowId, "WindowsForms10.COMBOBOX.app.0.11ecf055")
 		this.DataExtractJobDuplicatesScope := new DropDownBox(this.WindowId, "WindowsForms10.COMBOBOX.app.0.11ecf054")
 		this.RulesList := new FlexProcessorRuleList(this.WindowId, "WindowsForms10.SysTreeView32.app.0.11ecf052")
+		this.Criteria := new TabControl(this.WindowId, "WindowsForms10.SysTabControl32.app.0.11ecf051")
+		this.ItemIdList := new ListBox(this.WindowId, "WindowsForms10.LISTBOX.app.0.11ecf054")
 	}
 	
 	CreateNewRule() {
+		this.GetFocus(this.Toolstrip)
 		preCount := this.RulesList.Count()
 		postCount := preCount
 		tries := 0
@@ -37,16 +40,21 @@ class FlexProcessorOptionsWindow {
 		}
 	}
 	
-	SaveRule() {
-		tries := 0
-		while (tries < 5) {
-			this.Toolstrip.Click(135, 10)
-			tries := tries + 1
-			Sleep 50
-		}
+	GetFocus(focusedControl) {
+		WinActivate, % this.WindowId
+		WinWaitActive, % this.WindowId, , 10
+		ControlFocus, , % focusedControl.ControlId
 	}
 	
+	GetItemIdListCount(ruleIndex) {
+		this.Criteria.Set(3)
+		this.RulesList.SelectRule(ruleIndex)
+		itemIds := this.ItemIdList.Count()
+		return itemIds
+	}
+
 	Exit() {
+		this.GetFocus(this.Toolstrip)
 		try {
 			tries := 0
 			while (tries < 5) {
@@ -54,6 +62,16 @@ class FlexProcessorOptionsWindow {
 				tries := tries + 1
 				Sleep 50
 			}
+		}
+	}
+	
+	SaveRule() {
+		this.GetFocus(this.Toolstrip)
+		tries := 0
+		while (tries < 5) {
+			this.Toolstrip.Click(135, 10)
+			tries := tries + 1
+			Sleep 50
 		}
 	}
 }
