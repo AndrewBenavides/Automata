@@ -10,6 +10,15 @@
 #Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
 #Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
 
+ExistsInDict(dict, value) {
+	for key, value in dict {
+		if (key = value) {
+			return true
+		}
+	}
+	return false
+}
+
 class LazilyLoadedTreeViewNode {
 	__New(tree, item, typeName) {
 		this.IsLoaded := false

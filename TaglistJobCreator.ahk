@@ -31,19 +31,22 @@ ProcessLog() {
 				
 				client := ecaptureController.Clients[jobLog.Client]
 				project := client.Projects[jobLog.Project]
-				custodian := project.Custodians[value.Custodian]
-				
-				addedCount := custodian.NewProcessingJobTaglist(options)
-				counts := CreateDeduplicationRule()
-				
-				value.TaglistCountCell.Value2 := fileCount
-				value.AddedCountCell.Value2 := addedCount
-				value.ParentCountCell.Value2 := counts.ParentCount
-				value.ChildCountCell.Value2 := counts.ChildCount
-				if (counts.ParentCount > 0) {
-					value.StatusCell.Value2 := "Added"
+				if (ExistsInDict(project.Custodians, value.Custodian)) {
+					custodian := project.Custodians[value.Custodian]
+					addedCount := custodian.NewProcessingJobTaglist(options)
+					counts := CreateDeduplicationRule()
+					
+					value.TaglistCountCell.Value2 := fileCount
+					value.AddedCountCell.Value2 := addedCount
+					value.ParentCountCell.Value2 := counts.ParentCount
+					value.ChildCountCell.Value2 := counts.ChildCount
+					if (counts.ParentCount > 0) {
+						value.StatusCell.Value2 := "Added"
+					} else {
+						value.StatusCell.Value2 := "Error?"
+					}
 				} else {
-					value.StatusCell.Value2 := "Error?"
+					value.StatusCell.Value2 := "Custodian not found."
 				}
 			}
 		} else {
