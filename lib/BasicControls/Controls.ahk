@@ -115,8 +115,6 @@ class DropDownBox extends Control {
 	}
 	
 	GetIndex() {
-		;SendMessage, 0x147, 0, 0, , % this.ControlId
-		;return ErrorLevel
 		index := this.FindIndex(this.Get())
 		return index
 	}
@@ -154,6 +152,40 @@ class Label extends Control {
 	Get() {
 		ControlGetText, value, , % this.ControlId
 		return value
+	}
+}
+
+class ListBox extends Control {
+	Count() {
+		i := 0
+		for item in this.Get() {
+			i := A_Index
+		}
+		return i
+	}
+	
+	Get() {
+		contentsList := []
+		tries := 0
+		contents := ""
+		ErrorLevel := -1
+		while (contents = "" and tries < 5 and ErrorLevel <> 0) {
+			ControlGet, contents, List, , % this.ControlClass , % this.WindowId
+			;this.ControlId doesn't seem to work. It's probably non-existent
+			;when the handle is fetched
+			tries := tries + 1
+			if (tries > 1) {
+				Sleep 25
+			}
+		}
+		if (ErrorLevel <> 0) {
+			throw "ListBox could not retrieve contents."
+		}
+		loop, parse, contents, `n
+		{
+			contentsList[A_Index] := A_LoopField
+		}
+		return contentsList
 	}
 }
 
