@@ -7,6 +7,8 @@ global col_JobName := 1
 global col_Status := 2
 global col_TaglistCount := 3
 global col_AddedCount := 4
+global col_ParentCount := 5
+global col_ChildCount := 6
 global cell_Client := "$B$1"
 global cell_Project := "$B$2"
 global cell_TaglistDir := "$B$3"
@@ -61,6 +63,8 @@ class LogEntry {
 		this.StatusCell := this.Worksheet.Cells(row, col_Status)
 		this.TaglistCountCell := this.Worksheet.Cells(row, col_TaglistCount)
 		this.AddedCountCell := this.Worksheet.Cells(row, col_AddedCount)
+		this.ParentCountCell := this.Worksheet.Cells(row, col_ParentCount)
+		this.ChildCountCell := this.Worksheet.Cells(row, col_ChildCount)
 	}
 	
 	GetTaglistCount() {
@@ -125,23 +129,5 @@ class ProcessingJobTaglistOptions {
 		this.FilePath := filePath
 		this.SelectChildren := selectChildren
 		this.ChildItemHandling := childItemHandling
-	}
-}
-
-Test() {
-	ecaptureController := new Controller()
-	jobLog := new JobLog()
-	entries := jobLog.GetEntries()
-	for key, value in entries {
-		name := value.JobName
-		filePath := value.TaglistFullName
-		selectChildren := value.JobLog.SelectChildren
-		childItemHandling := value.JobLog.ChildItemHandling
-		options := new ProcessingJobTaglistOptions(name, filePath, selectChildren, childItemHandling)
-		
-		client := ecaptureController.Clients[jobLog.Client]
-		project := client.Projects[jobLog.Project]
-		custodian := project.Custodians[value.Custodian]
-		custodian.NewProcessingJobTaglist(options)
 	}
 }

@@ -4,7 +4,7 @@ class ImportFromFileWindow {
 	__New() {
 		wintitle := "Import From File"
 		wintext := "Total lines:"
-		WinWait, % wintitle, % wintext, 10
+		WinWait, % wintitle, % wintext, 30
 		this.WindowId := "ahk_id " . WinExist(wintitle, wintext)
 		this.Count := new Label(this.WindowId, "WindowsForms10.STATIC.app.0.11ecf051")
 	}

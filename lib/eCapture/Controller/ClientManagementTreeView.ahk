@@ -174,11 +174,10 @@ class Custodian extends BaseClass {
 		processJobWdw.ItemIdFilePath.Set(options.FilePath)
 		processJobWdw.SelectChildren.Set(options.SelectChildren)
 		processJobWdw.ChildItemHandling[options.ChildItemHandling].Set()
-		Sleep 250
 		processJobWdw.OkButton.Click()
-		
+
 		countWdw := new ImportFromFileWindow()
-		fileCount := countWdw.GetCount()
+		addedCount := countWdw.GetCount()
 		
 		WinWait, % "Options for Processing Job", % "General Options", 10
 		handle := "ahk_id " . WinExist("Options for Processing Job")
@@ -188,6 +187,7 @@ class Custodian extends BaseClass {
 		
 		Sleep 250
 		settingsWdw.OkButton.Click()
+		return addedCount
 	}
 }
 
