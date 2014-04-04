@@ -186,7 +186,7 @@ class Custodian extends BaseClass {
 		settingsWdw.TabControl.Set(4)
 		settingsWdw.ManageFlexProcessorButton.Click()
 		
-		Sleep 2500
+		Sleep 250
 		settingsWdw.OkButton.Click()
 	}
 }

@@ -19,7 +19,15 @@ class CheckableControl extends Control {
 	}
 	
 	IsChecked() {
-		ControlGet, state, Checked, , % this.ControlClass, % this.WindowId
+		tries := 0
+		ErrorLevel := -1
+		while (tries < 5 and ErrorLevel <> 0) {
+			ControlGet, state, Checked, , % this.ControlClass, % this.WindowId
+			tries := tries + 1
+		}
+		if (ErrorLevel <> 0) {
+			throw "CheckableControl could not retrieve state"
+		}
 		return state
 	}
 }
@@ -36,10 +44,22 @@ class CheckBox extends CheckableControl {
 	}
 
 	Set(value) {
-		if (value) { 
-			Control, Check, , % this.ControlClass, % this.WindowId
-		} else {
-			Control, Uncheck, , % this.ControlClass, % this.WindowId
+		tries := 0
+		setValue := this.IsChecked()
+		ErrorLevel := -1
+		while (setValue <> value and tries < 5 and ErrorLevel <> 0) {
+			if (value) { 
+				Control, Check, , % this.ControlClass, % this.WindowId
+			} else {
+				Control, Uncheck, , % this.ControlClass, % this.WindowId
+			}
+			tries := tries + 1
+			Sleep 25
+			setValue := this.IsChecked()
+		}
+		
+		if (setValue <> value) {
+			throw "CheckBox could not be set"
 		}
 	}
 	
@@ -63,13 +83,29 @@ class DropDownBox extends Control {
 	}
 	
 	Get() {
-		ControlGet, value, Choice, , , % this.ControlId
+		tries := 0
+		ErrorLevel := -1
+		while (tries < 5 and ErrorLevel <> 0) {
+			ControlGet, value, Choice, , , % this.ControlId
+			tries := tries + 1
+			Sleep 25
+		}
+		if (ErrorLevel <> 0) {
+			throw "DropDownBox could not get value"
+		}
 		return value
 	}
 	
 	GetChoices() {
 		choices := {}
-		ControlGet, contents, List, , , % this.ControlId
+		
+		tries := 0
+		ErrorLevel := -1
+		while (tries < 5 and ErrorLevel <> 0){
+			ControlGet, contents, List, , , % this.ControlId
+			tries := tries + 1
+		}
+		
 		loop, parse, contents, `n 
 		{
 			index := A_Index
@@ -81,16 +117,36 @@ class DropDownBox extends Control {
 	GetIndex() {
 		;SendMessage, 0x147, 0, 0, , % this.ControlId
 		;return ErrorLevel
-		this.FindIndex(this.Get())
+		index := this.FindIndex(this.Get())
+		return index
 	}
 	
 	Set(value) {
-		index := this.FindIndex(value)
-		this.SetIndex(index)
+		selected := this.Get()
+		tries := 0
+		while (selected <> value and tries < 5) {
+			index := this.FindIndex(value)
+			this.SetIndex(index)
+			selected := this.Get()
+			tries := tries + 1
+		}
+		if (selected <> value) {
+			throw "DropDownBox could not be set."
+		}
 	}
 	
 	SetIndex(index) {
-		Control, Choose, % index, , % this.ControlId
+		selected := this.GetIndex()
+		tries := 0
+		ErrorLevel := -1
+		while (selected <> index and tries < 5 and ErrorLevel <> 0) {
+			Control, Choose, % index, , % this.ControlId
+			selected := this.GetIndex()
+			tries := tries + 1
+		}
+		if (selected <> index) {
+			throw "DropDownBox could not be set by index."
+		}
 	}
 }
 
@@ -117,7 +173,18 @@ class RadioButtons {
 
 class RadioButton extends CheckableControl {
 	Set() {
-		Control, Check, , % this.ControlClass, % this.WindowId
+		state := this.IsChecked()
+		tries := 0
+		ErrorLevel := -1
+		while (state = false and tries < 5 and ErrorLevel <> 0) {
+			Control, Check, , % this.ControlClass, % this.WindowId
+			tries := tries + 1
+			Sleep 25
+			state := this.IsChecked()
+		}
+		if (state = false) {
+			throw "RadioButton could not be set."
+		}
 	}
 }
 
@@ -171,6 +238,14 @@ class TextBox extends Control {
 
 class ToolStrip extends Control {
 	Click(xCoor, yCoor) {
-		ControlClick, , % this.ControlId, , , , NA X%xCoor% Y%yCoor%
+		tries := 0
+		ErrorLevel := -1
+		while (tries < 5 and ErrorLevel <> 0) {
+			ControlClick, , % this.ControlId, , , , NA X%xCoor% Y%yCoor%
+			tries := tries + 1
+		}
+		if (ErrorLevel <> 0) {
+			throw "ToolStrip could not be clicked."
+		}
 	}
 }

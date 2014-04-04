@@ -23,7 +23,7 @@ class FlexProcessorOptionsWindow {
 		preCount := this.RulesList.Count()
 		postCount := preCount
 		tries := 0
-		while (postCount <> (preCount + 1) and tries < 5) {
+		while (postCount <> (preCount + 1) and tries < 10) {
 			this.Toolstrip.Click(50, 10)
 			tries := tries + 1
 			Sleep 100
@@ -47,11 +47,13 @@ class FlexProcessorOptionsWindow {
 	}
 	
 	Exit() {
-		tries := 0
-		while (tries < 5) {
-			this.Toolstrip.Click(660, 10)
-			tries := tries + 1
-			Sleep 50
+		try {
+			tries := 0
+			while (tries < 5) {
+				this.Toolstrip.Click(660, 10)
+				tries := tries + 1
+				Sleep 50
+			}
 		}
 	}
 }
