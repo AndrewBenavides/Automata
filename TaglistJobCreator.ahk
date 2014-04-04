@@ -31,7 +31,7 @@ ProcessLog() {
 				
 				client := ecaptureController.Clients[jobLog.Client]
 				project := client.Projects[jobLog.Project]
-				if (ExistsInDict(project.Custodians, value.Custodian)) {
+				if (project.Custodians.Exists(value.Custodian)) {
 					custodian := project.Custodians[value.Custodian]
 					addedCount := custodian.NewProcessingJobTaglist(options)
 					counts := CreateDeduplicationRule()
@@ -67,7 +67,7 @@ CreateDeduplicationRule() {
 	wdw.DataExtractJobDuplicatesScope.Set("Project")
 	wdw.SaveRule()
 	counts.ParentCount := ValidateParents(wdw)
-	counts.ChildCount := ValidateParents(wdw)
+	counts.ChildCount := ValidateChildren(wdw)
 	wdw.Exit()
 	return counts
 }

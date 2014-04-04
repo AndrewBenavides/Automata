@@ -9,6 +9,7 @@ global col_TaglistCount := 3
 global col_AddedCount := 4
 global col_ParentCount := 5
 global col_ChildCount := 6
+global col_CustodianOverride := 7
 global cell_Client := "$B$1"
 global cell_Project := "$B$2"
 global cell_TaglistDir := "$B$3"
@@ -56,7 +57,8 @@ class LogEntry {
 		this.JobLog := jobLog
 		this.Worksheet := this.JobLog.Worksheet
 		this.JobName := this.Worksheet.Cells(row, col_JobName).Value2
-		this.Custodian := this.ParseCustodian(this.JobName)
+		this.CustodianOverride := this.Worksheet.Cells(row, col_CustodianOverride).Value2
+		this.Custodian := this.ParseCustodian()
 		this.TaglistName := this.JobName . ".txt"
 		this.TaglistFullName := this.JobLog.TaglistDir . "\" . this.TaglistName
 		
@@ -94,9 +96,15 @@ class LogEntry {
 		}
 	}
 	
-	ParseCustodian(jobName) {
-		StringSplit, parts, jobName, _
-		name := parts2
+	ParseCustodian() {
+		name := ""
+		if (this.CustodianOverride = "") {
+			jobName := this.JobName
+			StringSplit, parts, jobName, _
+			name := parts2
+		} else {
+			name := this.CustodianOverride
+		}
 		return name
 	}
 	

@@ -10,17 +10,9 @@
 #Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
 #Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
 
-ExistsInDict(dict, value) {
-	for key, value in dict {
-		if (key = value) {
-			return true
-		}
-	}
-	return false
-}
-
 class LazilyLoadedTreeViewNode {
 	__New(tree, item, typeName) {
+		this.Items := []
 		this.IsLoaded := false
 		this.Tree := tree
 		this.Item := item
@@ -29,11 +21,9 @@ class LazilyLoadedTreeViewNode {
 	
 	__Get(key) {
 		if !this.IsLoaded {
-			this.Expand()
-			this.GetChildren()
-			this.IsLoaded := true
+			this.Load()
 		}
-		return this[key]
+		return this.Items[key]
 	}
 	
 	Collapse() {
@@ -44,12 +34,25 @@ class LazilyLoadedTreeViewNode {
 	
 	DestroyValues() {
 		keys := {}
-		for key, value in this {
+		for key, value in this.Items {
 			keys.Add(key)
 		}
 		for key in keys {
-			this.Remove(key)
+			this.Items.Remove(key)
 		}
+	}
+	
+	Exists(item) {
+		if !this.IsLoaded {
+			this.Load()
+		}
+		items := this.Items
+		for key, value in items {
+			if (key = item) {
+				return true
+			}
+		}
+		return false
 	}
 	
 	Expand() {
@@ -75,10 +78,16 @@ class LazilyLoadedTreeViewNode {
 				child := new Job(this.Tree, item)
 			}
 			if child.IsValid() {
-				this[child.Name] := child
+				this.Items[child.Name] := child
 			}
 			item := this.Tree.GetNext(item)
 		}
+	}
+	
+	Load() {
+		this.Expand()
+		this.GetChildren()
+		this.IsLoaded := true
 	}
 }
 
