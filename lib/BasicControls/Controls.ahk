@@ -1,15 +1,44 @@
-﻿GetControlHwnd(windowId, controlClass) {
-	ControlGet, controlHwnd, Hwnd, , % controlClass, % windowId
-	controlHwnd := "ahk_id " . controlHwnd
-	return controlHwnd
-}
-
-class Control {
+﻿class Control {
 	__New(windowId, controlClass) {
 		this.WindowId := windowId
 		this.ControlClass := controlClass
-		this.ControlId := GetControlHwnd(this.WindowId, this.ControlClass)
+		this.ControlId := this.GetControlHwnd()
 		this.Extend()
+	}
+	
+	GetControlHwnd() {
+		message := "Control handle for " . this.ControlClass . " in window " . this.WindowId . " could not be found."
+		handle := this.Try("Control.GetControlHwndCommand", message)
+		return handle
+	}
+	
+	GetControlHwndCommand() {
+		ControlGet, controlHwnd, Hwnd, , % this.ControlClass, % this.WindowId
+		if ErrorLevel {
+			return false
+		} else {
+			return "ahk_id " . controlHwnd
+		}
+	}
+	
+	Try(functionName, errorMessage) {
+		function := Func(functionName)
+		if !IsFunc(function) {
+			throw "Function " . functionName . " was not found."
+		}
+		
+		value := {}
+		attempts := 0
+		ErrorLevel := -1
+		while (attempts < 5 && ErrorLevel <> 0) {
+			value := function.(this)
+			Sleep (1 + (25 * attempts))
+			attempts += 1
+		}
+		if (ErrorLevel <> 0) {
+			throw % errorMessage
+		}
+		return value
 	}
 }
 
@@ -19,15 +48,13 @@ class CheckableControl extends Control {
 	}
 	
 	IsChecked() {
-		tries := 0
-		ErrorLevel := -1
-		while (tries < 5 and ErrorLevel <> 0) {
-			ControlGet, state, Checked, , % this.ControlClass, % this.WindowId
-			tries := tries + 1
-		}
-		if (ErrorLevel <> 0) {
-			throw "CheckableControl could not retrieve state"
-		}
+		message := "CheckableControl could not retrieve state"
+		state := this.Try("CheckableControl.IsCheckedCommand", message)
+		return state
+	}
+	
+	IsCheckedCommand() {
+		ControlGet, state, Checked, , , % this.ControlId
 		return state
 	}
 }
@@ -205,18 +232,18 @@ class RadioButtons {
 
 class RadioButton extends CheckableControl {
 	Set() {
+		message := "RadioButton could not be set."
+		state := this.Try("RadioButton.SetCommand", message)
+		return state
+	}
+	
+	SetCommand() {
 		state := this.IsChecked()
-		tries := 0
-		ErrorLevel := -1
-		while (state = false and tries < 5 and ErrorLevel <> 0) {
-			Control, Check, , % this.ControlClass, % this.WindowId
-			tries := tries + 1
-			Sleep 25
-			state := this.IsChecked()
-		}
 		if (state = false) {
-			throw "RadioButton could not be set."
-		}
+			Control, Check, , , % this.ControlId
+			state := this.IsChecked()
+		} 
+		return state
 	}
 }
 
