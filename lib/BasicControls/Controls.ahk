@@ -21,6 +21,17 @@
 		}
 	}
 	
+	Send(keys) {
+		this.Keys := keys
+		message := "Control could not receive sent key commands."
+		this.Try("Control.SendCommand", message)
+	}
+	
+	SendCommand() {
+		ControlSend, , % this.Keys, % this.ControlId
+		this.Keys :=
+	}
+	
 	Try(functionName, errorMessage) {
 		function := Func(functionName)
 		if !IsFunc(function) {
@@ -198,8 +209,6 @@ class ListBox extends Control {
 		ErrorLevel := -1
 		while (contents = "" and tries < 5 and ErrorLevel <> 0) {
 			ControlGet, contents, List, , % this.ControlClass , % this.WindowId
-			;this.ControlId doesn't seem to work. It's probably non-existent
-			;when the handle is fetched
 			tries := tries + 1
 			if (tries > 1) {
 				Sleep 25
@@ -297,14 +306,17 @@ class TextBox extends Control {
 
 class ToolStrip extends Control {
 	Click(xCoor, yCoor) {
-		tries := 0
-		ErrorLevel := -1
-		while (tries < 5 and ErrorLevel <> 0) {
-			ControlClick, , % this.ControlId, , , , NA X%xCoor% Y%yCoor%
-			tries := tries + 1
-		}
-		if (ErrorLevel <> 0) {
-			throw "ToolStrip could not be clicked."
-		}
+		this.xCoor := xCoor
+		this.yCoor := yCoor
+		message := "ToolStrip could not be clicked."
+		this.Try("ToolStrip.ClickCommand", message)
+	}
+	
+	ClickCommand() {
+		xCoor := this.xCoor
+		yCoor := this.yCoor
+		ControlClick, , % this.ControlId, , , , NA X %xCoor% Y%yCoor%
+		this.xCoor :=
+		this.yCoor :=
 	}
 }

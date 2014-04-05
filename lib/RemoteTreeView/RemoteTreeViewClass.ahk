@@ -1,3 +1,7 @@
+#Include .\lib\RemoteTreeView\Const_Memory.ahk
+#Include .\lib\RemoteTreeView\Const_Process.ahk
+#Include .\lib\RemoteTreeView\Const_TreeView.ahk
+
 ;--------------------------------------------------------------------------------------------------
 ; Title:  Remote TreeView class
 ;         This class allows a script to work with TreeViews controlled by a third party process.
