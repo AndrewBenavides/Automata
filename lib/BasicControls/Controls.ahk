@@ -82,23 +82,22 @@ class CheckBox extends CheckableControl {
 	}
 
 	Set(value) {
-		tries := 0
-		setValue := this.IsChecked()
-		ErrorLevel := -1
-		while (setValue <> value and tries < 5 and ErrorLevel <> 0) {
-			if (value) { 
-				Control, Check, , % this.ControlClass, % this.WindowId
+		this.SetValue := value
+		message := "CheckBox could not be set."
+		this.Try("CheckBox.SetCommand", message)
+	}
+	
+	SetCommand() {
+		value := this.SetValue
+		if (value <> this.IsChecked()) {
+			if value {
+				Control, Check, , , % this.ControlId
 			} else {
-				Control, Uncheck, , % this.ControlClass, % this.WindowId
+				Control, Uncheck, , , % this.ControlId
 			}
-			tries := tries + 1
-			Sleep 25
-			setValue := this.IsChecked()
 		}
-		
-		if (setValue <> value) {
-			throw "CheckBox could not be set"
-		}
+		this.SetValue :=
+		return value
 	}
 	
 	Uncheck() {
@@ -121,29 +120,21 @@ class DropDownBox extends Control {
 	}
 	
 	Get() {
-		tries := 0
-		ErrorLevel := -1
-		while (tries < 5 and ErrorLevel <> 0) {
-			ControlGet, value, Choice, , , % this.ControlId
-			tries := tries + 1
-			Sleep 25
-		}
-		if (ErrorLevel <> 0) {
-			throw "DropDownBox could not get value"
-		}
+		message := "DropDownBox could not get value."
+		value := this.Try("DropDownBox.GetCommand", message)
+		return value
+	}
+	
+	GetCommand() {
+		ControlGet, value, Choice, , , % this.ControlId
 		return value
 	}
 	
 	GetChoices() {
-		choices := {}
+		message := "DropDownBox could not get values."
+		contents := this.Try("DropDownBox.GetChoicesCommand", message)
 		
-		tries := 0
-		ErrorLevel := -1
-		while (tries < 5 and ErrorLevel <> 0){
-			ControlGet, contents, List, , , % this.ControlId
-			tries := tries + 1
-		}
-		
+		choices := {}		
 		loop, parse, contents, `n 
 		{
 			index := A_Index
@@ -152,44 +143,55 @@ class DropDownBox extends Control {
 		return choices
 	}
 	
+	GetChoicesCommand() {
+		ControlGet, contents, List, , , % this.ControlId
+		return contents
+	}
+	
 	GetIndex() {
 		index := this.FindIndex(this.Get())
 		return index
 	}
 	
 	Set(value) {
-		selected := this.Get()
-		tries := 0
-		while (selected <> value and tries < 5) {
+		if (value <> this.Get()) {
 			index := this.FindIndex(value)
 			this.SetIndex(index)
-			selected := this.Get()
-			tries := tries + 1
-		}
-		if (selected <> value) {
-			throw "DropDownBox could not be set."
+		
+			if (value <> this.Get()) {
+				throw "DropDownBox could not be set."
+			}
 		}
 	}
 	
 	SetIndex(index) {
-		selected := this.GetIndex()
-		tries := 0
-		ErrorLevel := -1
-		while (selected <> index and tries < 5 and ErrorLevel <> 0) {
-			Control, Choose, % index, , % this.ControlId
-			selected := this.GetIndex()
-			tries := tries + 1
+		if (index <> this.GetIndex()) {
+			this.SetIndex := index
+			message := "DropDownBox could not be set by index."
+			this.Try("DropDownBox.SetIndexCommand", message)
+		
+			if (index <> this.GetIndex()) {
+				throw % message
+			}
 		}
-		if (selected <> index) {
-			throw "DropDownBox could not be set by index."
-		}
+	}
+	
+	SetIndexCommand() {
+		Control, Choose, % this.SetIndex, , % this.ControlId
+		this.SetIndex :=
 	}
 }
 
 class Label extends Control {
 	Get() {
-		ControlGetText, value, , % this.ControlId
+		message := "Label could not retrieve contents"
+		value := this.Try("Label.GetCommand", message)
 		return value
+	}
+	
+	GetCommand() {
+		ControlGetText, value, , % this.ControlId
+		return value	
 	}
 }
 
@@ -203,25 +205,20 @@ class ListBox extends Control {
 	}
 	
 	Get() {
+		message := "ListBox could not retrieve contents."
+		contents := this.Try("ListBox.GetCommand", message)
+		
 		contentsList := []
-		tries := 0
-		contents := ""
-		ErrorLevel := -1
-		while (contents = "" and tries < 5 and ErrorLevel <> 0) {
-			ControlGet, contents, List, , % this.ControlClass , % this.WindowId
-			tries := tries + 1
-			if (tries > 1) {
-				Sleep 25
-			}
-		}
-		if (ErrorLevel <> 0) {
-			throw "ListBox could not retrieve contents."
-		}
 		loop, parse, contents, `n
 		{
 			contentsList[A_Index] := A_LoopField
 		}
 		return contentsList
+	}
+	
+	GetCommand() {
+		ControlGet, contents, List, , , this.ControlId
+		return contents
 	}
 }
 
@@ -275,32 +272,29 @@ class TabControl extends Control {
 
 class TextBox extends Control {
 	Get() {
-		tries := 0
-		value := ""
-		while (tries < 5 and value = "") {
-			if (tries > 0 ) {
-				Sleep 50
-			}
-			ControlGetText, value, % this.ControlClass, % this.WindowId
-			tries := tries + 1
-		}
+		message := "TextBox could not retrieve contents."
+		value := this.Try("TextBox.GetCommand", message)
+		return value
+	}
+	
+	GetCommand() {
+		ControlGetText, value, , % this.ControlId
 		return value
 	}
 	
 	Set(value) {
-		tries := 0
-		setValue := ""
-		while (tries < 5 and setValue <> value) {
-			if (tries > 0) {
-				Sleep 100
-			}
-			ControlSetText, % this.ControlClass, % value, % this.WindowId
-			setValue := this.Get()
-			tries := tries + 1
+		this.SetValue := value
+		message := "TextBox was not able to set value."
+		this.Try("TextBox.SetCommand", message)
+		
+		if (value <> this.Get()) {
+			throw % message
 		}
-		if (setValue <> value) {
-			throw "Error: value was not able to be set."
-		}
+	}
+	
+	SetCommand() {
+		ControlSetText, , % this.SetValue, % this.ControlId
+		this.SetValue :=
 	}
 }
 
