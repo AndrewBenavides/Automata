@@ -72,7 +72,12 @@ class CheckableControl extends Control {
 
 class Button extends Control {
 	Click() {
-		ControlClick, % this.ControlClass, % this.WindowId, , , , NA
+		message := "Button could not be clicked."
+		this.Try("Button.ClickCommand", message)
+	}
+	
+	ClickCommand() {
+		ControlClick, , % this.ControlId, , , , NA
 	}
 }
 
@@ -223,16 +228,28 @@ class ListBox extends Control {
 }
 
 class RadioButtons {
+	__New(windowId) {
+		this.WindowId := windowId
+	}
+	
+	Extend() {
+		this.Buttons := []
+	}
+	
+	Add(key, className) {
+		this.Buttons[key] := new RadioButton(this.WindowId, className)
+	}
+	
 	Get() {
-		for key, value in this {
+		for key, value in this.Buttons {
 			if (value.IsChecked()) {
 				return key
 			}
 		}
 	}
 	
-	Set(value) {
-		this[value].Set()
+	Set(key) {
+		this.Buttons[key].Set()
 	}
 }
 
