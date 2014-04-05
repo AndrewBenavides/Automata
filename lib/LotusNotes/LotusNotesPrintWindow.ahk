@@ -8,19 +8,28 @@ class LotusNotesPrintWindow {
 		this.WindowId := "ahk_id " . WinExist(winTitle, winText)
 		
 		this.Tabs := new LotusNotesPrintWindowTabStrip(this.WindowId, "IRIS.tabs1")
+		this.SettingsButton := new Button(this.WindowId, "Button7")
+		this.OkButton := new Button(this.WindowId, "Button21")
+		
 		this.Tabs.SelectPageSetup()
-		this.Orientation := new RadioButtons()
-		this.Orientation["Portrait"] := new RadioButton(this.WindowId, "Button1")
-		this.Orientation["Landscape"] := new RadioButton(this.WindowId, "Button2")
+		this.Orientation := new RadioButtons(this.WindowId)
+		this.Orientation.Add("Portrait", "Button1")
+		this.Orientation.Add("Landscape", "Button2")
 		this.Sizes := new DropDownBox(this.WindowId, "ComboBox1")
 		this.ExpandAllSections := new CheckBox(this.WindowId, "Button6")
-		this.Tabs.SelectPrinter()
 	}
 	
 	BindControls() {
 		this.EmailBody := new Control(this.WindowId, "NotesRichText1")
 	}
 	
+	Dismiss() {
+		while WinExist(this.WindowId) {
+			this.OkButton.Click()
+			Sleep 25
+		}
+	}
+
 	PrintEmail() {
 		this.EmailBody.Send("^p")
 	}
@@ -66,6 +75,7 @@ class LotusNotesPrintWindowTabStrip extends Control {
 	
 	SwitchTab(xCoor, yCoor, tabContent) {
 		this.ToolStrip.Click(xCoor, yCoor)
+		WinWait, % this.WindowId, % tabContent, 3
 		WinGetText, contents, % this.WindowId
 		if InStr(contents, tabContent) {
 			ErrorLevel := 0
