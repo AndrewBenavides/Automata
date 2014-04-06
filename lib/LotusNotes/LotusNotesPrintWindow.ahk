@@ -5,18 +5,24 @@ class LotusNotesPrintWindow {
 		winTitle := "Print Document" 
 		winText := "Print Tabbed Tables"
 		WinWait, % winTitle, % winText, % wait
-		this.WindowId := "ahk_id " . WinExist(winTitle, winText)
-		
-		this.Tabs := new LotusNotesPrintWindowTabStrip(this.WindowId, "IRIS.tabs1")
-		this.SettingsButton := new Button(this.WindowId, "Button7")
-		this.OkButton := new Button(this.WindowId, "Button21")
-		
-		this.Tabs.SelectPageSetup()
-		this.Orientation := new RadioButtons(this.WindowId)
-		this.Orientation.Add("Portrait", "Button1")
-		this.Orientation.Add("Landscape", "Button2")
-		this.Sizes := new DropDownBox(this.WindowId, "ComboBox1")
+		windowId := WinExist(winTitle, winText)
+		if windowId {
+			this.Exists := true
+			this.WindowId := "ahk_id " . windowId
+			
+			this.Tabs := new LotusNotesPrintWindowTabStrip(this.WindowId, "IRIS.tabs1")
+			this.SettingsButton := new Button(this.WindowId, "Button7")
+			this.OkButton := new Button(this.WindowId, "Button21")
+			
+			this.Tabs.SelectPageSetup()
+			this.Orientation := new RadioButtons(this.WindowId)
+			this.Orientation.Add("Portrait", "Button1")
+			this.Orientation.Add("Landscape", "Button2")
+			this.Sizes := new DropDownBox(this.WindowId, "ComboBox1")
 		this.ExpandAllSections := new CheckBox(this.WindowId, "Button6")
+		} else {
+			this.Exists := false
+		}
 	}
 	
 	BindControls() {
