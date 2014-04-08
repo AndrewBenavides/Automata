@@ -232,6 +232,10 @@ class RadioButtons {
 		this.WindowId := windowId
 	}
 	
+	__Get(key) {
+		return this.Buttons[key]
+	}
+	
 	Extend() {
 		this.Buttons := []
 	}
