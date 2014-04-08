@@ -204,11 +204,17 @@ class Label extends Control {
 
 class ListBox extends Control {
 	Count() {
-		i := 0
-		for item in this.Get() {
-			i := A_Index
-		}
-		return i
+		message := "ListBox could not count contents."
+		listCount := this.Try("ListBox.CountCommand", message)
+		return listCount
+	}
+	
+	CountCommand() {
+		;http://www.autohotkey.com/board/topic/67521-listbox-count/?p=427253
+		SendMessage, 0x18B, 0, 0, , % this.ControlId
+		listCount := ErrorLevel
+		ErrorLevel := (ErrorLevel != "FAIL") ? 0 : 1
+		return listCount
 	}
 	
 	Get() {
@@ -299,9 +305,8 @@ class ListView extends Control {
 		RemoteBuf_Open(hLVITEM, WinExist(this.WindowId), 20)
 		RemoteBuf_Write(hLVITEM, LVITEM, 20)
 		SendMessage, LVM_SETITEMSTATE, index, RemoteBuf_Get(hLVITEM), , % this.ControlId
-		error_level := !ErrorLevel
+		error_level := (ErrorLevel != "FAIL") ? !ErrorLevel : 1 ;SetItemState returns true or false
 		RemoteBuf_Close(hLVITEM)
-		
 		ErrorLevel := error_level
 		this.SelectedIndex :=
 		this.SelectedState :=
@@ -358,19 +363,67 @@ class RadioButton extends CheckableControl {
 }
 
 class TabControl extends Control {
+	__Get(name) {
+		if !this.Tabs.HasKey(name)
+			throw "Tab """ . name . """ was not found."
+		return this.Tabs[name]
+	}
+	
+	Add(index, name) {
+		this.Tabs[name] := new TabControl.Tab(this, index, name)
+	}
+	
 	Count() {
-		SendMessage, 0x1304,,, % this.ControlClass, % this.WindowId  ; 0x1304 is TCM_GETITEMCOUNT.
-		TabCount = %ErrorLevel%
+		message := "TabControl could not retrieve tab count."
+		tabCount := this.Try("TabControl.CountCommand", message)
+		return tabCount
+	}
+	
+	CountCommand() {
+		SendMessage, 0x1304, , , , % this.ControlId  ; 0x1304 is TCM_GETITEMCOUNT.
+		tabCount := ErrorLevel
+		ErrorLevel := (ErrorLevel != "FAIL") ? 0 : 1
+		return tabCount
 	}
 	
 	Get() {
-		ControlGet, selected, Tab, , % this.ControlClass, % this.WindowId
+		message := "TabControl could not retrieve selected index."
+		selected := this.Try("TabControl.GetCommand", message)
 		return selected
 	}
 	
-	Set(value) {
-		SendMessage, 0x1330, % value, , % this.ControlClass, % this.WindowId
-		SendMessage, 0x130C, % value, , % this.ControlClass, % this.WindowId
+	GetCommand() {
+		ControlGet, selected, Tab, , , % this.ControlId
+		return selected
+	}
+	
+	Set(index) {
+		this.SetIndex := index
+		message := "TabControl could not be set by index."
+		this.Try("TabControl.SetCommand", message)
+	}
+	
+	SetCommand() {
+		;http://www.autohotkey.com/board/topic/9885-control-tab-n/?p=62432
+		index := this.SetIndex
+		SendMessage, 0x1330, % index, , , % this.ControlId ;TCM_SETCURFOCUS
+		error_level1 := (ErrorLevel != "FAIL" ? 0 : 1)
+		Sleep 1
+		SendMessage, 0x130C, % index, , , % this.ControlId ;TCM_SETCURSEL
+		error_level2 := (ErrorLevel != "FAIL" ? 0 : 1)
+		ErrorLevel := error_level1 || error_level2
+	}
+
+	class Tab {
+		__New(tabControl, index, name = "") {
+			this.TabControl := tabControl
+			this.Index := index
+			this.Name := name
+		}
+		
+		Set() {
+			this.TabControl.Set(this.Index)
+		}
 	}
 }
 

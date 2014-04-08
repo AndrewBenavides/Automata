@@ -41,7 +41,7 @@ class Window {
 	}
 	
 	BindTabControl(controlClass) {
-		return new TablControl(this.WindowId, controlClass)
+		return new TabControl(this.WindowId, controlClass)
 	}
 	
 	BindTextBox(controlClass) {
