@@ -349,7 +349,9 @@ class RadioButton extends CheckableControl {
 		state := this.IsChecked()
 		if (state = false) {
 			Control, Check, , , % this.ControlId
-			state := true
+			error_level := ErrorLevel
+			state := this.IsChecked()
+			ErrorLevel := !state || error_level
 		} 
 		return state
 	}
