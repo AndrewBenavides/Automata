@@ -237,8 +237,10 @@ class ListView extends Control {
 		{
 			row := A_Index
 			loop, parse, A_LoopField, %A_Tab%
+			{
 				cell := A_Index
 				values[row, cell] := A_LoopField
+			}
 		}
 		return values
 	}
