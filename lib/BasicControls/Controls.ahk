@@ -1,4 +1,6 @@
-﻿class Control {
+﻿#Include .\lib\ex\RemoteBuf\RemoteBuf.ahk
+
+class Control {
 	__New(windowId, controlClass) {
 		this.WindowId := windowId
 		this.ControlClass := controlClass
@@ -213,20 +215,97 @@ class ListBox extends Control {
 		message := "ListBox could not retrieve contents."
 		contents := this.Try("ListBox.GetCommand", message)
 		
-		contentsList := []
+		values := []
 		loop, parse, contents, `n
-		{
-			contentsList[A_Index] := A_LoopField
-		}
-		return contentsList
+			values[A_Index] := A_LoopField
+		return values
 	}
 	
 	GetCommand() {
-		ControlGet, contents, List, , , this.ControlId
+		ControlGet, contents, List, , , % this.ControlId
 		return contents
 	}
 }
 
+class ListView extends Control {
+	Get() {
+		message := "ListView could not retrieve contents."
+		contents := this.Try("ListView.GetCommand", message)
+		
+		values := []
+		loop, parse, contents, `n
+		{
+			row := A_Index
+			loop, parse, A_LoopField, %A_Tab%
+				cell := A_Index
+				values[row, cell] := A_LoopField
+		}
+		return values
+	}
+	
+	GetCommand() {
+		ControlGet, contents, List, , , % this.ControlId
+		return contents
+	}
+
+	GetColumnCount() {
+		message := "ListView could not retrieve column count."
+		colCount := this.Try("ListView.GetColumnCountCommand", message)
+		return colCount
+	}
+	
+	GetColumnCountCommand() {
+		ControlGet, colCount, List, Count Col, , % this.ControlId
+		return colCount
+	}
+	
+	GetRowCount() {
+		message := "ListView could not retrieve column count."
+		rowCount := this.Try("ListView.GetRowCountCommand", message)
+		return rowCount
+	}
+	
+	GetRowCountCommand() {
+		ControlGet, rowCount, List, Count, , % this.ControlId
+		return rowCount
+	}
+	
+	SelectRow(index, state = true) {
+		this.SelectedIndex := index
+		this.SelectedState := state
+		message := "ListView could not be set by index."
+		this.Try("ListView.SelectRowCommand", message)
+	}
+
+	SelectRowCommand() {
+		;http://www.autohotkey.com/board/topic/36781-advanced-select-row-in-external-listview/?p=322882
+		;http://www.autohotkey.com/board/topic/86149-checkuncheck-checkbox-in-listview-using-sendmessage/?p=548821
+		LVIF_STATE 			:= 0x8
+		LVIS_CHECKED       	:= 0x2000
+		LVIS_UNCHECKED     	:= 0x1000
+		LVIS_STATEIMAGEMASK	:= 0xF000
+		LVM_SETITEMSTATE	:= 0x102B
+
+		index := this.SelectedIndex - 1
+		state := this.SelectedState ? LVIS_CHECKED : LVIS_UNCHECKED
+		
+		VarSetCapacity(LVITEM, 20, 0)
+		NumPut(LVIF_STATE, LVITEM,0,"UInt") ;-- mask
+		NumPut(index, LVITEM,4,"Int")
+		NumPut(state, LVITEM,12,"UInt")
+		NumPut(LVIS_STATEIMAGEMASK, LVITEM,16,"UInt")
+		RemoteBuf_Open(hLVITEM, WinExist(this.WindowId), 20)
+		RemoteBuf_Write(hLVITEM, LVITEM, 20)
+		SendMessage, LVM_SETITEMSTATE, index, RemoteBuf_Get(hLVITEM), , % this.ControlId
+		error_level := !ErrorLevel
+		RemoteBuf_Close(hLVITEM)
+		
+		ErrorLevel := error_level
+		this.SelectedIndex :=
+		this.SelectedState :=
+	}
+}
+	
 class RadioButtons {
 	__New(windowId) {
 		this.WindowId := windowId
