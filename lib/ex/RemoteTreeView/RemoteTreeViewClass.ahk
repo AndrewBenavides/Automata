@@ -1,6 +1,6 @@
-#Include .\lib\RemoteTreeView\Const_Memory.ahk
-#Include .\lib\RemoteTreeView\Const_Process.ahk
-#Include .\lib\RemoteTreeView\Const_TreeView.ahk
+#Include .\lib\ex\RemoteTreeView\Const_Memory.ahk
+#Include .\lib\ex\RemoteTreeView\Const_Process.ahk
+#Include .\lib\ex\RemoteTreeView\Const_TreeView.ahk
 
 ;--------------------------------------------------------------------------------------------------
 ; Title:  Remote TreeView class

@@ -1,8 +1,5 @@
 ﻿; Includes for RemoteTreeView
-#Include .\lib\RemoteTreeView\Const_TreeView.ahk
-#Include .\lib\RemoteTreeView\Const_Process.ahk
-#Include .\lib\RemoteTreeView\Const_Memory.ahk
-#Include .\lib\RemoteTreeView\RemoteTreeViewClass.ahk
+#Include .\lib\ex\RemoteTreeView\RemoteTreeViewClass.ahk
 
 
 class FlexProcessorRuleList {
