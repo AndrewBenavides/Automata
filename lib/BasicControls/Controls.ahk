@@ -8,6 +8,25 @@ class Control {
 		this.Extend()
 	}
 	
+	__Delete() {
+		DllCall("GlobalFree", "ptr", this.ptr)
+	}
+
+	Focus() {
+		message := "Control could not attain focus."
+		this.Try("Control.FocusCommand", message)
+	}
+	
+	FocusCommand() {
+		WinActivate, % this.WindowId
+		error_level1 := (ErrorLevel = -1) ? 0 : ErrorLevel
+		WinWaitActive, % this.WindowId, , 10
+		error_level2 := ErrorLevel
+		ControlFocus, , % this.ControlId
+		error_level3 := ErrorLevel
+		ErrorLevel := error_level1 || error_level2 || error_level3
+	}
+	
 	GetControlHwnd() {
 		message := "Control handle for " . this.ControlClass . " in window " . this.WindowId . " could not be found."
 		handle := this.Try("Control.GetControlHwndCommand", message)
@@ -466,7 +485,7 @@ class ToolStrip extends Control {
 	ClickCommand() {
 		xCoor := this.xCoor
 		yCoor := this.yCoor
-		ControlClick, , % this.ControlId, , , , NA X %xCoor% Y%yCoor%
+		ControlClick, , % this.ControlId, , , , NA X%xCoor% Y%yCoor%
 		this.xCoor :=
 		this.yCoor :=
 	}
