@@ -53,7 +53,13 @@ class Window {
 	}
 	
 	SetHandle(wait) {
-		WinWait, % this.WinTitle, % this.WinText, 30
-		this.WindowId := "ahk_id " . WinExist(this.WinTitle, this.WinText)
+		WinWait, % this.WinTitle, % this.WinText, % wait
+		windowId := WinExist(this.WinTitle, this.WinText)
+		if windowId {
+			this.WindowId := "ahk_id " . windowId
+			this.Exists := true
+		} else {
+			this.Exists := false
+		}
 	}
 }
