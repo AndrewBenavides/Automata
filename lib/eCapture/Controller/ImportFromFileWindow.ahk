@@ -1,11 +1,12 @@
 ﻿#Include .\lib\BasicControls\Controls.ahk
 
-class ImportFromFileWindow {
-	__New() {
-		wintitle := "Import From File"
-		wintext := "Total lines:"
-		WinWait, % wintitle, % wintext, 30
-		this.WindowId := "ahk_id " . WinExist(wintitle, wintext)
+class ImportFromFileWindow extends Window {
+	SetTitle() {
+		this.WinTitle := "Import From File"
+		this.WinText := "Total lines:"		
+	}
+	
+	BindControls() {
 		this.Count := new Label(this.WindowId, "WindowsForms10.STATIC.app.0.11ecf051")
 	}
 	
