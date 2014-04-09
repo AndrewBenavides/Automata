@@ -1,4 +1,9 @@
-﻿; Includes for RemoteTreeView
+﻿global ecaptureHwnd := WinExist("eCapture Controller")
+global eCapture := "ahk_id " . ecaptureHwnd
+global tv := "WindowsForms10.SysTreeView32.app.0.11ecf051"
+
+
+; Includes for RemoteTreeView
 #Include .\lib\ex\RemoteTreeView\RemoteTreeViewClass.ahk
 
 ;Includes from lib
