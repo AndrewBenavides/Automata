@@ -11,16 +11,18 @@ SetKeyDelay 125, 125
 
 ; Includes from lib
 #Include %A_ScriptDir%
-#Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
+
 #Include .\lib\Excel\ProcessingJobTaglistLog.ahk
-#Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
-#Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
+#Include .\lib\eCapture\Controller\Controller.ahk
+#Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
 #Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
 #Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
+#Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
+#Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
 
 ProcessLog() {
-	;MouseMove, 1, 1, 0
-	ecaptureController := new Controller()
+	MouseMove, 1, 1, 0
+	controller := new Controller()
 	jobLog := new JobLog()
 	entries := jobLog.GetEntries()
 	for key, entry in entries {
@@ -28,7 +30,7 @@ ProcessLog() {
 		counts.File := entry.GetTaglistCount()
 		if IsNumber(counts.File) {
 			if (counts.File > 0) {
-				custodian := TargetCustodian(eCaptureController, entry)
+				custodian := TargetCustodian(controller, entry)
 				if custodian.Exists {
 					options := GetOptions(entry)
 					processingJobWindow := custodian.NewProcessingJob()
@@ -58,6 +60,7 @@ IsNumber(num) {
 TargetCustodian(controller, entry) {
 	client := controller.Clients[jobLog.Client]
 	project := client.Projects[jobLog.Project]
+	custodian := {}
 	try {
 		custodian := project.Custodians[entry.Custodian]
 		custodian.Exists := true
