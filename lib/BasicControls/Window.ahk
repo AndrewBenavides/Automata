@@ -4,8 +4,10 @@ class Window {
 	__New(wait = 30) {
 		this.SetTitle()
 		this.SetHandle(wait)
-		this.BindControls()
-		this.Extend()
+		if this.Exists {
+			this.BindControls()
+			this.Extend()
+		}
 	}
 		
 	BindButton(controlClass) {
