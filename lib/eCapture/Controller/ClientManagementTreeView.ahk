@@ -11,6 +11,7 @@ global tv := "WindowsForms10.SysTreeView32.app.0.11ecf051"
 #Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
 #Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
 #Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
+#Include .\lib\BasicControls\Controls.ahk
 
 class LazilyLoadedTreeViewNode {
 	__New(tree, item, typeName) {
@@ -25,6 +26,8 @@ class LazilyLoadedTreeViewNode {
 		if !this.IsLoaded {
 			this.Load()
 		}
+		if !this.Exists(key)
+			throw "Key """ . key . """ does not exist in dictionary."
 		return this.Items[key]
 	}
 	
@@ -44,17 +47,12 @@ class LazilyLoadedTreeViewNode {
 		}
 	}
 	
-	Exists(item) {
+	Exists(key) {
 		if !this.IsLoaded {
 			this.Load()
 		}
-		items := this.Items
-		for key, value in items {
-			if (key = item) {
-				return true
-			}
-		}
-		return false
+		exists := this.Items.HasKey(key)
+		return exists
 	}
 	
 	Expand() {
@@ -179,35 +177,22 @@ class Custodian extends BaseClass {
 		this.ProcessingJobs := this.ProcessingJobNode.Jobs
 	}
 	
-	NewProcessingJobTaglist(options) {
-		this.ProcessingJobNode.Select()
-		WinActivate, % eCapture
-		ControlFocus, % tv, % eCapture
-		SendInput {AppsKey}
-		SendInput {Up}
-		SendInput {Enter}
-		WinWait, % "Processing Job", % "Task Table", 10
-		handle := "ahk_id " . WinExist("Processing Job")
-		processJobWdw := new NewProcessJobWindow(handle, "DataExtractImport")
-		
-		processJobWdw.Name.Set(options.Name)
-		processJobWdw.ItemIdFilePath.Set(options.FilePath)
-		processJobWdw.SelectChildren.Set(options.SelectChildren)
-		processJobWdw.ChildItemHandling[options.ChildItemHandling].Set()
-		processJobWdw.OkButton.Click()
-
-		countWdw := new ImportFromFileWindow()
-		addedCount := countWdw.GetCount()
-		
-		WinWait, % "Options for Processing Job", % "General Options", 10
-		handle := "ahk_id " . WinExist("Options for Processing Job")
-		settingsWdw := new ProcessingJobOptionsWindow(handle)
-		settingsWdw.TabControl.Set(4)
-		settingsWdw.ManageFlexProcessorButton.Click()
-		
-		Sleep 250
-		settingsWdw.OkButton.Click()
-		return addedCount
+	NewProcessingJob() {
+		wdw := {}
+		wdw.Exists := False
+		tries := 0
+		while (!wdw.Exists && tries < 5) {
+			this.ProcessingJobNode.Select()
+			WinActivate, % eCapture
+			ControlFocus, % tv, % eCapture
+			SendInput, {Escape}{Escape}{AppsKey}{AppsKey}
+			Sleep (1 + (tries * 100))
+			SendInput, {Up}{Enter}
+			tries += 1
+			Sleep (1 + (tries * 100))
+			wdw := new NewProcessJobWindow()
+		}
+		return wdw
 	}
 }
 
