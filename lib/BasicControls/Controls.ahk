@@ -1,9 +1,30 @@
-﻿class Control {
+﻿#Include .\lib\ex\RemoteBuf\RemoteBuf.ahk
+
+class Control {
 	__New(windowId, controlClass) {
 		this.WindowId := windowId
 		this.ControlClass := controlClass
 		this.ControlId := this.GetControlHwnd()
 		this.Extend()
+	}
+	
+	__Delete() {
+		DllCall("GlobalFree", "ptr", this.ptr)
+	}
+
+	Focus() {
+		message := "Control could not attain focus."
+		this.Try("Control.FocusCommand", message)
+	}
+	
+	FocusCommand() {
+		WinActivate, % this.WindowId
+		error_level1 := (ErrorLevel = -1) ? 0 : ErrorLevel
+		WinWaitActive, % this.WindowId, , 10
+		error_level2 := ErrorLevel
+		ControlFocus, , % this.ControlId
+		error_level3 := ErrorLevel
+		ErrorLevel := error_level1 || error_level2 || error_level3
 	}
 	
 	GetControlHwnd() {
@@ -202,34 +223,122 @@ class Label extends Control {
 
 class ListBox extends Control {
 	Count() {
-		i := 0
-		for item in this.Get() {
-			i := A_Index
-		}
-		return i
+		message := "ListBox could not count contents."
+		listCount := this.Try("ListBox.CountCommand", message)
+		return listCount
+	}
+	
+	CountCommand() {
+		;http://www.autohotkey.com/board/topic/67521-listbox-count/?p=427253
+		SendMessage, 0x18B, 0, 0, , % this.ControlId
+		listCount := ErrorLevel
+		ErrorLevel := (ErrorLevel != "FAIL") ? 0 : 1
+		return listCount
 	}
 	
 	Get() {
 		message := "ListBox could not retrieve contents."
 		contents := this.Try("ListBox.GetCommand", message)
 		
-		contentsList := []
+		values := []
 		loop, parse, contents, `n
-		{
-			contentsList[A_Index] := A_LoopField
-		}
-		return contentsList
+			values[A_Index] := A_LoopField
+		return values
 	}
 	
 	GetCommand() {
-		ControlGet, contents, List, , , this.ControlId
+		ControlGet, contents, List, , , % this.ControlId
 		return contents
 	}
 }
 
+class ListView extends Control {
+	Get() {
+		message := "ListView could not retrieve contents."
+		contents := this.Try("ListView.GetCommand", message)
+		
+		values := []
+		loop, parse, contents, `n
+		{
+			row := A_Index
+			loop, parse, A_LoopField, %A_Tab%
+			{
+				cell := A_Index
+				values[row, cell] := A_LoopField
+			}
+		}
+		return values
+	}
+	
+	GetCommand() {
+		ControlGet, contents, List, , , % this.ControlId
+		return contents
+	}
+
+	GetColumnCount() {
+		message := "ListView could not retrieve column count."
+		colCount := this.Try("ListView.GetColumnCountCommand", message)
+		return colCount
+	}
+	
+	GetColumnCountCommand() {
+		ControlGet, colCount, List, Count Col, , % this.ControlId
+		return colCount
+	}
+	
+	GetRowCount() {
+		message := "ListView could not retrieve column count."
+		rowCount := this.Try("ListView.GetRowCountCommand", message)
+		return rowCount
+	}
+	
+	GetRowCountCommand() {
+		ControlGet, rowCount, List, Count, , % this.ControlId
+		return rowCount
+	}
+	
+	SelectRow(index, state = true) {
+		this.SelectedIndex := index
+		this.SelectedState := state
+		message := "ListView could not be set by index."
+		this.Try("ListView.SelectRowCommand", message)
+	}
+
+	SelectRowCommand() {
+		;http://www.autohotkey.com/board/topic/36781-advanced-select-row-in-external-listview/?p=322882
+		;http://www.autohotkey.com/board/topic/86149-checkuncheck-checkbox-in-listview-using-sendmessage/?p=548821
+		LVIF_STATE 			:= 0x8
+		LVIS_CHECKED       	:= 0x2000
+		LVIS_UNCHECKED     	:= 0x1000
+		LVIS_STATEIMAGEMASK	:= 0xF000
+		LVM_SETITEMSTATE	:= 0x102B
+
+		index := this.SelectedIndex - 1
+		state := this.SelectedState ? LVIS_CHECKED : LVIS_UNCHECKED
+		
+		VarSetCapacity(LVITEM, 20, 0)
+		NumPut(LVIF_STATE, LVITEM,0,"UInt") ;-- mask
+		NumPut(index, LVITEM,4,"Int")
+		NumPut(state, LVITEM,12,"UInt")
+		NumPut(LVIS_STATEIMAGEMASK, LVITEM,16,"UInt")
+		RemoteBuf_Open(hLVITEM, WinExist(this.WindowId), 20)
+		RemoteBuf_Write(hLVITEM, LVITEM, 20)
+		SendMessage, LVM_SETITEMSTATE, index, RemoteBuf_Get(hLVITEM), , % this.ControlId
+		error_level := (ErrorLevel != "FAIL") ? !ErrorLevel : 1 ;SetItemState returns true or false
+		RemoteBuf_Close(hLVITEM)
+		ErrorLevel := error_level
+		this.SelectedIndex :=
+		this.SelectedState :=
+	}
+}
+	
 class RadioButtons {
 	__New(windowId) {
 		this.WindowId := windowId
+	}
+	
+	__Get(key) {
+		return this.Buttons[key]
 	}
 	
 	Extend() {
@@ -264,26 +373,76 @@ class RadioButton extends CheckableControl {
 		state := this.IsChecked()
 		if (state = false) {
 			Control, Check, , , % this.ControlId
-			state := true
+			error_level := ErrorLevel
+			state := this.IsChecked()
+			ErrorLevel := !state || error_level
 		} 
 		return state
 	}
 }
 
 class TabControl extends Control {
+	__Get(name) {
+		if !this.Tabs.HasKey(name)
+			throw "Tab """ . name . """ was not found."
+		return this.Tabs[name]
+	}
+	
+	Add(index, name) {
+		this.Tabs[name] := new TabControl.Tab(this, index, name)
+	}
+	
 	Count() {
-		SendMessage, 0x1304,,, % this.ControlClass, % this.WindowId  ; 0x1304 is TCM_GETITEMCOUNT.
-		TabCount = %ErrorLevel%
+		message := "TabControl could not retrieve tab count."
+		tabCount := this.Try("TabControl.CountCommand", message)
+		return tabCount
+	}
+	
+	CountCommand() {
+		SendMessage, 0x1304, , , , % this.ControlId  ; 0x1304 is TCM_GETITEMCOUNT.
+		tabCount := ErrorLevel
+		ErrorLevel := (ErrorLevel != "FAIL") ? 0 : 1
+		return tabCount
 	}
 	
 	Get() {
-		ControlGet, selected, Tab, , % this.ControlClass, % this.WindowId
+		message := "TabControl could not retrieve selected index."
+		selected := this.Try("TabControl.GetCommand", message)
 		return selected
 	}
 	
-	Set(value) {
-		SendMessage, 0x1330, % value, , % this.ControlClass, % this.WindowId
-		SendMessage, 0x130C, % value, , % this.ControlClass, % this.WindowId
+	GetCommand() {
+		ControlGet, selected, Tab, , , % this.ControlId
+		return selected
+	}
+	
+	Set(index) {
+		this.SetIndex := index
+		message := "TabControl could not be set by index."
+		this.Try("TabControl.SetCommand", message)
+	}
+	
+	SetCommand() {
+		;http://www.autohotkey.com/board/topic/9885-control-tab-n/?p=62432
+		index := this.SetIndex
+		SendMessage, 0x1330, % index, , , % this.ControlId ;TCM_SETCURFOCUS
+		error_level1 := (ErrorLevel != "FAIL" ? 0 : 1)
+		Sleep 1
+		SendMessage, 0x130C, % index, , , % this.ControlId ;TCM_SETCURSEL
+		error_level2 := (ErrorLevel != "FAIL" ? 0 : 1)
+		ErrorLevel := error_level1 || error_level2
+	}
+
+	class Tab {
+		__New(tabControl, index, name = "") {
+			this.TabControl := tabControl
+			this.Index := index
+			this.Name := name
+		}
+		
+		Set() {
+			this.TabControl.Set(this.Index)
+		}
 	}
 }
 
@@ -326,7 +485,7 @@ class ToolStrip extends Control {
 	ClickCommand() {
 		xCoor := this.xCoor
 		yCoor := this.yCoor
-		ControlClick, , % this.ControlId, , , , NA X %xCoor% Y%yCoor%
+		ControlClick, , % this.ControlId, , , , NA X%xCoor% Y%yCoor%
 		this.xCoor :=
 		this.yCoor :=
 	}

@@ -11,51 +11,113 @@ SetKeyDelay 125, 125
 
 ; Includes from lib
 #Include %A_ScriptDir%
-#Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
+
 #Include .\lib\Excel\ProcessingJobTaglistLog.ahk
+#Include .\lib\eCapture\Controller\Controller.ahk
+#Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
+#Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
+#Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
+#Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
+#Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
 
 ProcessLog() {
-	ecaptureController := new Controller()
+	MouseMove, 1, 1, 0
+	controller := new Controller()
 	jobLog := new JobLog()
 	entries := jobLog.GetEntries()
-	for key, value in entries {
-		fileCount := value.GetTaglistCount()
-		if fileCount is number 
-		{
-			if (fileCount > 0) {
-				name := value.JobName
-				filePath := value.TaglistFullName
-				selectChildren := value.JobLog.SelectChildren
-				childItemHandling := value.JobLog.ChildItemHandling
-				options := new ProcessingJobTaglistOptions(name, filePath, selectChildren, childItemHandling)
-				
-				client := ecaptureController.Clients[jobLog.Client]
-				project := client.Projects[jobLog.Project]
-				if (project.Custodians.Exists(value.Custodian)) {
-					custodian := project.Custodians[value.Custodian]
-					addedCount := custodian.NewProcessingJobTaglist(options)
-					counts := CreateDeduplicationRule()
-					
-					value.TaglistCountCell.Value2 := fileCount
-					value.AddedCountCell.Value2 := addedCount
-					value.ParentCountCell.Value2 := counts.ParentCount
-					value.ChildCountCell.Value2 := counts.ChildCount
-					if (counts.ParentCount > 0) {
-						value.StatusCell.Value2 := "Added"
-					} else {
-						value.StatusCell.Value2 := "Error?"
-					}
+	for key, entry in entries {
+		counts := {}
+		counts.File := entry.GetTaglistCount()
+		if IsNumber(counts.File) {
+			if (counts.File > 0) {
+				custodian := TargetCustodian(controller, entry)
+				if custodian.Exists {
+					options := GetOptions(entry)
+					processingJobWindow := custodian.NewProcessingJob()
+					ConfigureProcessingJob(processingJobWindow, options)
+					counts.Added := GetAddedCount()
+					counts := CreateFilterAndGetCounts(counts)
+					LogCount(entry, counts)
 				} else {
-					value.StatusCell.Value2 := "Custodian not found."
+					entry.StatusCell.Value2 := "Custodian not found."
 				}
 			}
 		} else {
-			value.StatusCell.Value2 := fileCount
+			entry.StatusCell.Value2 := fileCount
 		}
 	}
 }
 
-CreateDeduplicationRule() {
+IsNumber(num) {
+	if num is number 
+	{
+		return true
+	} else {
+		return false
+	}
+}
+
+TargetCustodian(controller, entry) {
+	client := controller.Clients[jobLog.Client]
+	project := client.Projects[jobLog.Project]
+	custodian := {}
+	try {
+		custodian := project.Custodians[entry.Custodian]
+		custodian.Exists := true
+	} catch ex {
+		custodian.Exists := false
+	}
+	return custodian
+}
+
+GetOptions(entry) {
+	name := entry.JobName
+	filePath := entry.TaglistFullName
+	selectChildren := entry.JobLog.SelectChildren
+	childItemHandling := entry.JobLog.ChildItemHandling
+	options := new ProcessingJobTaglistOptions(name, filePath, selectChildren, childItemHandling)
+	return options
+}
+
+ConfigureProcessingJob(window, options) {
+	window.Type["DataExtractImport"].Set()
+	window.Name.Set(options.Name)
+	window.ItemIdFilePath.Set(options.FilePath)
+	window.SelectChildren.Set(options.SelectChildren)
+	window.ChildItemHandling[options.ChildItemHandling].Set()
+	window.OkButton.Click()
+}
+
+GetAddedCount() {
+	countWdw := new ImportFromFileWindow()
+	addedCount := countWdw.GetCount()
+	return addedCount
+}
+
+CreateFilterAndGetCounts(counts) {
+	OpenFilteringOptions()
+	filteringCounts := CreateFilteringRules()
+	counts.Parents := filteringCounts.ParentCount
+	counts.Children := filteringCounts.ChildCount
+	return counts
+}
+
+OpenFilteringOptions() {
+	window := new ProcessingJobOptionsWindow()
+	tries := 0
+	filterWindow := {}
+	filterWindow.Exists := false
+	while (!filterWindow.Exists && tries < 5) {
+		window.ManageFlexProcessorButton.Click()
+		filterWindow := new FlexProcessorOptionsWindow()
+		Sleep (1 + (tries * 100))
+		tries += 1
+	}
+	window.OkButton.Click() 
+	;Create dismiss method on base Window class?
+}
+
+CreateFilteringRules() {
 	counts := {}
 	wdw := new FlexProcessorOptionsWindow()
 	wdw.CreateNewRule()
@@ -84,6 +146,19 @@ ValidateChildren(wdw) {
 	} else {
 		itemCount := wdw.GetItemIdListCount(1)
 		return itemCount
+	}
+}
+
+LogCount(entry, counts) {
+	entry.TaglistCountCell.Value2 := counts.File
+	entry.AddedCountCell.Value2 := counts.Added
+	entry.ParentCountCell.Value2 := counts.Parents
+	entry.ChildCountCell.Value2 := counts.Children
+
+	if (counts.Parents > 0) {
+		entry.StatusCell.Value2 := "Added"
+	} else {
+		entry.StatusCell.Value2 := "Error?"
 	}
 }
 

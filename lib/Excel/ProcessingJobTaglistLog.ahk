@@ -1,9 +1,4 @@
-﻿global xl := ComObjActive("Excel.Application")
-global ecaptureHwnd := WinExist("eCapture Controller")
-global eCapture := "ahk_id " . ecaptureHwnd
-global tv := "WindowsForms10.SysTreeView32.app.0.11ecf051"
-
-global col_JobName := 1
+﻿global col_JobName := 1
 global col_Status := 2
 global col_TaglistCount := 3
 global col_AddedCount := 4
@@ -26,7 +21,7 @@ ConvertExcelBool(value) {
 class JobLog {
 	__New() {
 		this.Xl := ComObjActive("Excel.Application")
-		this.Worksheet := xl.ActiveSheet
+		this.Worksheet := this.Xl.ActiveSheet
 		this.Client := this.Worksheet.Range(cell_Client).Value2
 		this.Project := this.Worksheet.Range(cell_Project).Value2
 		this.TaglistDir := this.Worksheet.Range(cell_TaglistDir).Value2
