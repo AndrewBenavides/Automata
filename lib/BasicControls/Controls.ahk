@@ -1,15 +1,20 @@
 ﻿#Include .\lib\ex\RemoteBuf\RemoteBuf.ahk
+#Include .\lib\BasicControls\TreeView.ahk
 
 class Control {
 	__New(windowId, controlClass) {
-		this.WindowId := windowId
-		this.ControlClass := controlClass
-		this.ControlId := this.GetControlHwnd()
-		this.Extend()
+		this.Construct()
 	}
 	
 	__Delete() {
 		DllCall("GlobalFree", "ptr", this.ptr)
+	}
+	
+	Construct(windowId, controlClass) {
+		this.WindowId := windowId
+		this.ControlClass := controlClass
+		this.ControlId := this.GetControlHwnd()
+		this.Extend()
 	}
 
 	Focus() {
