@@ -9,6 +9,7 @@ class Controller extends Window {
 	}
 	
 	BindControls() {
-		this.Clients := new ClientManagementTreeView(this.WindowId, "WindowsForms10.SysTreeView32.app.0.11ecf051")
+		this.TreeView := new ClientManagementTreeView(this.WindowId, "WindowsForms10.SysTreeView32.app.0.11ecf051", true)
+		this.Clients := this.TreeView.Clients
 	}
 }
