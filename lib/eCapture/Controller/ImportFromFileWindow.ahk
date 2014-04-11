@@ -13,7 +13,9 @@ class ImportFromFileWindow extends Window {
 	GetCount() {
 		value := -1
 		while WinExist(this.WindowId) {
-			newValue := this.ParseCount(this.Count.Get())
+			try {
+				newValue := this.ParseCount(this.Count.Get())
+			}
 			if (newValue > value) {
 				value := newValue
 			}

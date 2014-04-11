@@ -1,15 +1,20 @@
 ﻿#Include .\lib\ex\RemoteBuf\RemoteBuf.ahk
+#Include .\lib\BasicControls\TreeView.ahk
 
 class Control {
 	__New(windowId, controlClass) {
-		this.WindowId := windowId
-		this.ControlClass := controlClass
-		this.ControlId := this.GetControlHwnd()
-		this.Extend()
+		this.Construct(windowId, controlClass)
 	}
 	
 	__Delete() {
 		DllCall("GlobalFree", "ptr", this.ptr)
+	}
+	
+	Construct(windowId, controlClass) {
+		this.WindowId := windowId
+		this.ControlClass := controlClass
+		this.ControlId := this.GetControlHwnd()
+		this.Extend()
 	}
 
 	Focus() {
@@ -60,12 +65,12 @@ class Control {
 		}
 		
 		value := {}
-		attempts := 0
+		tries := 0
 		ErrorLevel := -1
-		while (attempts < 5 && ErrorLevel <> 0) {
+		while (tries < 5 && ErrorLevel <> 0) {
 			value := function.(this)
-			Sleep (1 + (25 * attempts))
-			attempts += 1
+			Sleep (25 * tries)
+			tries += 1
 		}
 		if (ErrorLevel <> 0) {
 			throw % errorMessage
@@ -335,16 +340,13 @@ class ListView extends Control {
 class RadioButtons {
 	__New(windowId) {
 		this.WindowId := windowId
+		this.Buttons := []
 	}
 	
 	__Get(key) {
 		return this.Buttons[key]
 	}
-	
-	Extend() {
-		this.Buttons := []
-	}
-	
+		
 	Add(key, className) {
 		this.Buttons[key] := new RadioButton(this.WindowId, className)
 	}
@@ -427,7 +429,7 @@ class TabControl extends Control {
 		index := this.SetIndex
 		SendMessage, 0x1330, % index, , , % this.ControlId ;TCM_SETCURFOCUS
 		error_level1 := (ErrorLevel != "FAIL" ? 0 : 1)
-		Sleep 1
+		Sleep 0
 		SendMessage, 0x130C, % index, , , % this.ControlId ;TCM_SETCURSEL
 		error_level2 := (ErrorLevel != "FAIL" ? 0 : 1)
 		ErrorLevel := error_level1 || error_level2

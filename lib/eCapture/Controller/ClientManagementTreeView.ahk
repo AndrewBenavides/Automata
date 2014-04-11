@@ -2,183 +2,73 @@
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
 #Include .\lib\BasicControls\Controls.ahk
 
-class ClientManagementTreeView extends Control {
-	Extend() {
-		this.Controller := new ClientManagementTreeView.Controller(this.WindowId, this.ControlId)
+class ClientManagementTreeView extends TreeView {
+	AddChild(item) {
+		child := this.GetNewChild(item)
+		child.NodeName := child.GetText()
+		child.Name := this.ParseName(child.NodeName)
+		child.IsValid := this.IsValidNode(child.NodeName)
+		if child.IsValid {
+			this[this.ChildrenName][child.Name] := child
+		}
 	}
 	
-	__Get(key) {
-		return this.Controller.Clients[key]
+	GetChildrenName() {
+		return "Clients"
+	}
+	
+	GetNewChild(item) {
+		child := new ClientManagementTreeView.Client(this, item)
+		return child
 	}
 
-	class LazyNode {
-		__New(tree, item, typeName) {
-			this.Items := []
-			this.IsLoaded := false
-			this.Tree := tree
-			this.Item := item
-			this.TypeName := typeName
+	IsValidNode(name) {
+		valid := true
+		valid := (name <> "Export Jobs") ? valid : false
+		valid := (name <> "Dummy") ? valid : false
+		return valid
+	}
+	
+	ParseName(fullName) {
+		if InStr(fullName, ": ") {
+			StringSplit, parts, fullName, :
+			name := SubStr(parts2, 2)
+		} else {
+			name := fullName
+		}
+		return name
+	}
+		
+	class Client extends ClientManagementTreeView {		
+		GetNewChild(item) {
+			child := new ClientManagementTreeView.Project(this, item)
+			return child
 		}
 		
-		__Get(key) {
-			if !this.IsLoaded
-				this.Load()
-			if !this.Exists(key)
-				throw "Key """ . key . """ does not exist in dictionary."
-			return this.Items[key]
-		}
-		
-		Collapse() {
-			this.Tree.Expand(this.item, false)
-			this.DestroyValues()
-			this.IsLoaded := false
-		}
-		
-		DestroyValues() {
-			keys := {}
-			for key, value in this.Items {
-				keys.Add(key)
-			}
-			for key in keys {
-				this.Items.Remove(key)
-			}
-		}
-		
-		Exists(key) {
-			if !this.IsLoaded 
-				this.Load()
-			exists := this.Items.HasKey(key)
-			return exists
-		}
-		
-		Expand() {
-			this.Tree.Expand(this.item, true)
-		}
-		
-		GetChildren() {
-			item := this.Tree.GetChild(this.Item)
-			while item <> 0 {
-				if (this.TypeName = "Client") {
-					child := new ClientManagementTreeView.Client(this.Tree, item)
-				}
-				if (this.TypeName = "Project") {
-					child := new ClientManagementTreeView.Project(this.Tree, item)
-				}
-				if (this.TypeName = "Custodian") {
-					child := new ClientManagementTreeView.Custodian(this.Tree, item)
-				}
-				if (this.TypeName = "JobFolder") {
-					child := new ClientManagementTreeView.JobFolder(this.Tree, item)
-				}
-				if (this.TypeName = "Job") {
-					child := new ClientManagementTreeView.Job(this.Tree, item)
-				}
-				if child.IsValid() {
-					this.Items[child.Name] := child
-				}
-				item := this.Tree.GetNext(item)
-			}
-		}
-		
-		Load() {
-			this.Expand()
-			this.GetChildren()
-			this.IsLoaded := true
+		GetChildrenName() {
+			return "Projects"
 		}
 	}
-
-	class TreeItem {
-		__New(tree, item) {
-			this.Tree := tree
-			this.Item := item
-			this.NodeName := tree.GetText(item)
-			this.Name := this.ParseName(this.NodeName)
-			this.Construct()
+	
+	class Project extends ClientManagementTreeView {
+		GetNewChild(item) {
+			child := new ClientManagementTreeView.Custodian(this, item)
+			return child
 		}
 
-		__Delete() {
-			DllCall("GlobalFree", "ptr", this.ptr)
-		}
-		
-		IsValid() {
-			valid := true
-			if (this.NodeName = "Export Jobs") {
-				valid := false
-			}
-			if (this.NodeName = "Dummy") {
-				valid := false
-			}
-			return valid
-		}
-		
-		GetChildren(typeName) {
-			children := new ClientManagementTreeView.LazyNode(this.Tree, this.Item, typeName)
-			return children
-		}
-		
-		ParseName(fullName) {
-			if InStr(fullName, ": ") {
-				StringSplit, parts, fullName, :
-				name := SubStr(parts2, 2)
-			} else {
-				name := fullName
-			}
-			return name
-		}
-
-		Select() {
-			tries := 0
-			success := false
-			selected := this.Tree.GetText(this.Tree.GetSelection())
-			target := this.Tree.GetText(this.Item)
-			while (selected <> target && tries < 10) {
-				if this.Tree.SetSelection(this.Item) {
-					selected := this.Tree.GetText(this.Tree.GetSelection())
-				}
-				Sleep (1 + (tries * 100))
-				tries += 1
-			}
+		GetChildrenName() {
+			return "Custodians"
 		}
 	}
-
-	class Controller extends ClientManagementTreeView.TreeItem {
-		__New(windowId, controlId) {
-			handle := SubStr(controlId, 8)
-			this.Tree := new RemoteTreeView(handle)
-			this.Tree.ControlHandle := handle
-			this.Tree.ControlId := controlId
-			this.Tree.WindowId := windowId
-			this.Clients := this.GetChildren("Client")
+	
+	class Custodian extends ClientManagementTreeView {
+		GetNewChild(item) {
+			child := new ClientManagementTreeView.Folder(this, item)
+			return child
 		}
-		
-		IsValid() {
-			return true
-		}
-	}
 
-	class Client extends ClientManagementTreeView.TreeItem {
-		Construct() {
-			this.Projects := this.GetChildren("Project")
-		}	
-	}
-
-	class Project extends ClientManagementTreeView.TreeItem {
-		Construct() {
-			if this.IsValid() {
-				this.Custodians := this.GetChildren("Custodian")
-			}
-		}
-	}
-
-	class Custodian extends ClientManagementTreeView.TreeItem {
-		Construct() {
-			nodes := this.GetChildren("JobFolder")
-			this.DiscoveryJobNode := nodes["Discovery Jobs"]
-			this.DataExtractJobNode := nodes["Data Extract Jobs"]
-			this.ProcessingJobNode := nodes["Processing Jobs"]
-			this.DiscoveryJobs := this.DiscoveryJobNode.Jobs
-			this.DataExtractJobs := this.DataExtractJobNode.Jobs
-			this.ProcessingJobs := this.ProcessingJobNode.Jobs
+		GetChildrenName() {
+			return "Folders"
 		}
 		
 		NewProcessingJob() {
@@ -186,9 +76,9 @@ class ClientManagementTreeView extends Control {
 			wdw.Exists := False
 			tries := 0
 			while (!wdw.Exists && tries < 5) {
-				this.ProcessingJobNode.Select()
-				WinActivate, % this.Tree.WindowId
-				ControlFocus, , % this.Tree.ControlId
+				WinActivate, % this.WindowId
+				ControlFocus, , % this.ControlId
+				this[this.ChildrenName]["Processing Jobs"].Select()
 				SendInput, {Escape}{Escape}{AppsKey}{AppsKey}
 				Sleep (1 + (tries * 100))
 				SendInput, {Down}{Enter}
@@ -199,13 +89,26 @@ class ClientManagementTreeView extends Control {
 			return wdw
 		}
 	}
+	
+	class Folder extends ClientManagementTreeView {
+		GetNewChild(item) {
+			child := new ClientManagementTreeView.Job(this, item)
+			return child
+		}
 
-	class JobFolder extends ClientManagementTreeView.TreeItem {
-		Construct() {
-			this.Jobs := this.GetChildren("Job")
+		GetChildrenName() {
+			return "Jobs"
 		}
 	}
+	
+	class Job extends ClientManagementTreeView {
+		GetNewChild(item) {
+			child := new ClientManagementTreeView.Job(this, item)
+			return child
+		}
 
-	class Job extends ClientManagementTreeView.TreeItem {
+		GetChildrenName() {
+			return "Children"
+		}
 	}
 }
