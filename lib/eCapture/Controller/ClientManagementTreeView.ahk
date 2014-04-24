@@ -71,14 +71,24 @@ class ClientManagementTreeView extends TreeView {
 			return "Folders"
 		}
 		
+		NewDataExtractJob() {
+			wdw := this.NewJob("Data Extract Jobs")
+			return wdw
+		}
+		
 		NewProcessingJob() {
+			wdw := this.NewJob("Processing Jobs")
+			return wdw
+		}
+		
+		NewJob(jobType) {
 			wdw := {}
 			wdw.Exists := False
 			tries := 0
 			while (!wdw.Exists && tries < 5) {
 				WinActivate, % this.WindowId
 				ControlFocus, , % this.ControlId
-				this[this.ChildrenName]["Processing Jobs"].Select()
+				this[this.ChildrenName][jobType].Select()
 				SendInput, {Escape}{Escape}{AppsKey}{AppsKey}
 				Sleep (1 + (tries * 100))
 				SendInput, {Down}{Enter}
