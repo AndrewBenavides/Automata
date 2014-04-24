@@ -12,7 +12,7 @@ SetKeyDelay 125, 125
 ; Includes from lib
 #Include %A_ScriptDir%
 
-#Include .\lib\Excel\ProcessingJobTaglistLog.ahk
+#Include .\lib\Excel\ProcessTaglistJobLog.ahk
 #Include .\lib\eCapture\Controller\Controller.ahk
 #Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
 #Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
@@ -23,7 +23,7 @@ SetKeyDelay 125, 125
 ProcessLog() {
 	MouseMove, 1, 1, 0
 	controller := new Controller()
-	jobLog := new JobLog()
+	jobLog := new ProcessTaglistJobLog()
 	entries := jobLog.GetEntries()
 	for key, entry in entries {
 		counts := {}

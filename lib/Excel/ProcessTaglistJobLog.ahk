@@ -18,7 +18,7 @@ ConvertExcelBool(value) {
 	return false
 }
 
-class JobLog {
+class ProcessTaglistJobLog {
 	__New() {
 		this.Xl := ComObjActive("Excel.Application")
 		this.Worksheet := this.Xl.ActiveSheet
@@ -36,7 +36,7 @@ class JobLog {
 		
 		loop % rowCount {
 			row := A_Index + rowOffset
-			entry := new LogEntry(this, row)
+			entry := new ProcessTaglistJobLogEntry(this, row)
 			
 			if !entry.IsComplete() {
 				entries[entry.JobName] := entry
@@ -46,7 +46,7 @@ class JobLog {
 	}
 }
 
-class LogEntry {
+class ProcessTaglistJobLogEntry {
 	__New(jobLog, row) {
 		this.RowNumber := row
 		this.JobLog := jobLog
