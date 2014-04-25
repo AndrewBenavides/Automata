@@ -1,4 +1,5 @@
 ﻿#Include .\lib\ex\RemoteTreeView\RemoteTreeViewClass.ahk
+#Include .\lib\eCapture\Controller\NewDiscoveryJobWindow.ahk
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
 #Include .\lib\BasicControls\Controls.ahk
 
@@ -76,6 +77,11 @@ class ClientManagementTreeView extends TreeView {
 			return wdw
 		}
 		
+		NewDiscoveryJob() {
+			wdw := this.NewJob("Discovery Jobs")
+			return wdw
+		}
+		
 		NewProcessingJob() {
 			wdw := this.NewJob("Processing Jobs")
 			return wdw
@@ -94,7 +100,11 @@ class ClientManagementTreeView extends TreeView {
 				SendInput, {Down}{Enter}
 				tries += 1
 				Sleep (1 + (tries * 100))
-				wdw := new NewProcessJobWindow(2)
+				if (jobType = "Discovery Jobs") {
+					wdw := new NewDiscoveryJobWindow(2)
+				} else {
+					wdw := new NewProcessJobWindow(2)
+				}
 			}
 			return wdw
 		}
