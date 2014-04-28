@@ -1,67 +1,31 @@
-﻿global col_JobName := 1
-global col_Status := 2
-global col_TaglistCount := 3
-global col_AddedCount := 4
-global col_ParentCount := 5
-global col_ChildCount := 6
-global col_CustodianOverride := 7
-global cell_Client := "$B$1"
-global cell_Project := "$B$2"
-global cell_TaglistDir := "$B$3"
-global cell_SelectChildren := "$B$4"
-global cell_ChildItemHandling := "$B$5"
+﻿#Include .\lib\Excel\BaseJobLog.ahk
 
-ConvertExcelBool(value) {
-	if (value = -1) {
-		return true
-	}
-	return false
-}
-
-class ProcessTaglistJobLog {
-	__New() {
-		this.Xl := ComObjActive("Excel.Application")
-		this.Worksheet := this.Xl.ActiveSheet
-		this.Client := this.Worksheet.Range(cell_Client).Value2
-		this.Project := this.Worksheet.Range(cell_Project).Value2
-		this.TaglistDir := this.Worksheet.Range(cell_TaglistDir).Value2
-		this.SelectChildren := ConvertExcelBool(this.Worksheet.Range(cell_SelectChildren).Value2)
-		this.ChildItemHandling := this.Worksheet.Range(cell_ChildItemHandling).Value2
+class ProcessTaglistJobLog extends BaseJobLog {
+	HeaderRow := 8
+	
+	GetEntry(row) {
+		entry := new ProcessTaglistJobLogEntry(this, row)
+		return entry
 	}
 	
-	GetEntries() {
-		entries := {}
-		rowOffset := 7
-		rowCount := this.Worksheet.UsedRange.Rows.Count - rowOffset
-		
-		loop % rowCount {
-			row := A_Index + rowOffset
-			entry := new ProcessTaglistJobLogEntry(this, row)
-			
-			if !entry.IsComplete() {
-				entries[entry.JobName] := entry
-			}
-		}
-		return entries
+	GetProperties() {
+		this.Client := this.GetProperty("Client")
+		this.Project := this.GetProperty("Project")
+		this.TaglistDirectory := this.GetProperty("Taglist Directory")
+		this.SelectChildren := this.ConvertExcelBool(this.GetProperty("Select Children"))
+		this.ChildItemHandling := this.GetProperty("Child Item Handling")
 	}
 }
 
-class ProcessTaglistJobLogEntry {
-	__New(jobLog, row) {
-		this.RowNumber := row
-		this.JobLog := jobLog
-		this.Worksheet := this.JobLog.Worksheet
-		this.JobName := this.Worksheet.Cells(row, col_JobName).Value2
-		this.CustodianOverride := this.Worksheet.Cells(row, col_CustodianOverride).Value2
-		this.Custodian := this.ParseCustodian()
+class ProcessTaglistJobLogEntry extends BaseLogEntry {
+	GetProperties() {
 		this.TaglistName := this.JobName . ".txt"
-		this.TaglistFullName := this.JobLog.TaglistDir . "\" . this.TaglistName
+		this.TaglistFullName := this.Log.TaglistDirectory . "\" . this.TaglistName
 		
-		this.StatusCell := this.Worksheet.Cells(row, col_Status)
-		this.TaglistCountCell := this.Worksheet.Cells(row, col_TaglistCount)
-		this.AddedCountCell := this.Worksheet.Cells(row, col_AddedCount)
-		this.ParentCountCell := this.Worksheet.Cells(row, col_ParentCount)
-		this.ChildCountCell := this.Worksheet.Cells(row, col_ChildCount)
+		this.TaglistCountCell := this.GetCell("Taglist Count")
+		this.AddedCountCell := this.GetCell("Added Count")
+		this.ParentCountCell := this.GetCell("Parent Items")
+		this.ChildCountCell := this.GetCell("Child Items")
 	}
 	
 	GetTaglistCount() {
@@ -81,41 +45,7 @@ class ProcessTaglistJobLogEntry {
 		}
 		return output
 	}
-	
-	IsComplete() {
-		statusMessage := this.StatusCell.Value2
-		if (statusMessage <> "") {
-			return true
-		} else {
-			return false
-		}
-	}
-	
-	ParseCustodian() {
-		name := ""
-		if (this.CustodianOverride = "") {
-			jobName := this.JobName
-			StringSplit, parts, jobName, _
-			name := parts2
-		} else {
-			name := this.CustodianOverride
-		}
-		return name
-	}
-	
-	SetStatus(message, colorIndex) {
-		this.StatusCell.Value2 := message
-		this.StatusCell.Interior.ColorIndex := colorIndex
-	}
-	
-	SetAddedCount(itemCount) {
-		this.AddedCountCell.Value2 := itemCount
-	}
-	
-	SetTaglistCount(itemCount) {
-		this.TaglistCountCell.Value2 := itemCount
-	}
-	
+			
 	TaglistExists() {
 		FileGetSize, size, % this.TaglistFullName
 		if (size > 0) {
@@ -123,14 +53,5 @@ class ProcessTaglistJobLogEntry {
 		} else {
 			return false
 		}
-	}
-}
-
-class ProcessingJobTaglistOptions {
-	__New(name, filePath, selectChildren, childItemHandling) {
-		this.Name := name
-		this.FilePath := filePath
-		this.SelectChildren := selectChildren
-		this.ChildItemHandling := childItemHandling
 	}
 }
