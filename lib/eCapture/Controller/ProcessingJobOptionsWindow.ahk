@@ -1,4 +1,5 @@
 ﻿#Include .\lib\BasicControls\Controls.ahk
+#Include .\lib\BasicControls\Window.ahk
 
 class ProcessingJobOptionsWindow extends Window {
 	SetTitle() {

@@ -12,9 +12,10 @@ SetKeyDelay 125, 125
 ; Includes from lib
 #Include %A_ScriptDir%
 #Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
-#Include .\lib\Excel\DiscoveryJobLog.ahk
-#Include .\lib\eCapture\Controller\NewDiscoveryJobWindow.ahk
 #Include .\lib\eCapture\Controller\Controller.ahk
+#Include .\lib\eCapture\Controller\NewDiscoveryJobWindow.ahk
+#Include .\lib\eCapture\Controller\NewCustodianWindow.ahk
+#Include .\lib\Excel\DiscoveryJobLog.ahk
 
 ProcessLog() {
 	MouseMove, 1, 1, 0
@@ -26,12 +27,12 @@ ProcessLog() {
 			window := custodian.NewDiscoveryJob()
 			CreateJob(window, entry)
 		} else {
-			entry.SetStatus("Custodian does not exist.", 46)
+			entry.StatusCell.SetAndColor("Custodian does not exist.", xl_Orange)
 		}
 	}
 }
 
-TargetCustodian(controller, entry) {
+TargetCustodian(controller, entry, tries = 0) {
 	client := controller.Clients[entry.Client]
 	project := client.Projects[entry.Project]
 	custodian := {}
@@ -39,7 +40,15 @@ TargetCustodian(controller, entry) {
 		custodian := project.Custodians[entry.Custodian]
 		custodian.Exists := true
 	} catch ex {
-		custodian.Exists := false
+		if (entry.CreateCustodians && tries < 2) {
+			window := project.NewCustodian()
+			window.CustodianName.Set(entry.Custodian)
+			window.OkButton.Click()
+			project.Refresh()
+			custodian := TargetCustodian(controller, entry, tries + 1)
+		} else {
+			custodian.Exists := false
+		}
 	}
 	return custodian
 }
@@ -52,9 +61,9 @@ CreateJob(window, entry) {
 		window.CreateDtSearchIndex.Uncheck()
 		window.ShowJobOptions.Uncheck()
 		window.OkButton.Click()
-		entry.SetStatus("Discovery Job created.", 35)
+		entry.StatusCell.SetAndColor("Discovery Job created.", xl_LightGreen)
 	} else {
-		entry.SetStatus("Path does not exist.", 46)
+		entry.StatusCell.SetAndColor("Path does not exist.", xl_Orange)
 		window.CancelButton.Click()
 	}
 }

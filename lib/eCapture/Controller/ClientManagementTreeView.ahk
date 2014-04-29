@@ -1,7 +1,7 @@
-﻿#Include .\lib\ex\RemoteTreeView\RemoteTreeViewClass.ahk
+﻿#Include .\lib\BasicControls\Controls.ahk
+#Include .\lib\eCapture\Controller\NewCustodianWindow.ahk
 #Include .\lib\eCapture\Controller\NewDiscoveryJobWindow.ahk
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
-#Include .\lib\BasicControls\Controls.ahk
 
 class ClientManagementTreeView extends TreeView {
 	AddChild(item) {
@@ -39,6 +39,11 @@ class ClientManagementTreeView extends TreeView {
 		}
 		return name
 	}
+	
+	Refresh() {
+		this.Unload()
+		this.Load()
+	}
 		
 	class Client extends ClientManagementTreeView {		
 		GetNewChild(item) {
@@ -59,6 +64,24 @@ class ClientManagementTreeView extends TreeView {
 
 		GetChildrenName() {
 			return "Custodians"
+		}
+		
+		NewCustodian() {
+			window := {}
+			window.Exists := false
+			tries := 0
+			while (!window.Exists && tries < 5) {
+				WinActivate, % this.WindowId
+				ControlFocus, , % this.ControlId
+				this.Select()
+				SendInput, {Escape}{Escape}{AppsKey}{AppsKey}
+				Sleep (1 + (tries * 100))
+				SendInput, {Down}{Enter}
+				tries += 1
+				Sleep (1 + (tries * 100))
+				window := new NewCustodianWindow(2)
+			}
+			return window
 		}
 	}
 	
