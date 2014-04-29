@@ -11,7 +11,6 @@ SetKeyDelay 125, 125
 
 ; Includes from lib
 #Include %A_ScriptDir%
-
 #Include .\lib\Excel\ProcessTaglistJobLog.ahk
 #Include .\lib\eCapture\Controller\Controller.ahk
 #Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk

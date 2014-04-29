@@ -23,7 +23,7 @@ ProcessLog() {
 	for key, entry in jobLog.GetEntries() {
 		custodian := TargetCustodian(controller, entry)
 		if custodian.Exists {
-			processingJobWindow := GetNewJobWindow(jobLog, custodian)
+			processingJobWindow := GetNewJobWindow(entry, custodian)
 			CreateProcessingJob(processingJobWindow, entry)
 		}
 	}
@@ -42,13 +42,13 @@ TargetCustodian(controller, entry) {
 	return custodian
 }
 
-GetNewJobWindow(jobLog, custodian) {
-	if (jobLog.JobType = "Processing Jobs") {
+GetNewJobWindow(entry, custodian) {
+	if (entry.JobType = "Processing Jobs") {
 		window := custodian.NewProcessingJob()
-	} else if (jobLog.JobType = "Data Extract Jobs") {
+	} else if (entry.JobType = "Data Extract Jobs") {
 		window := custodian.NewDataExtractJob()
 	} else {
-		message := "Job Type """ . jobLog.JobType . " is not supported."
+		message := "Job Type """ . entry.JobType . " is not supported."
 		throw message
 	}	
 	return window
@@ -62,13 +62,14 @@ CreateProcessingJob(window, entry) {
 			discoveryJob.Check()
 			window.ShowJobOptions.Uncheck()
 			window.OkButton.Click()
-			entry.SetStatus("Processing Job Created.", 35)
+			jobType := SubStr(entry.JobType, 1, StrLen(entry.JobType) - 1)
+			entry.StatusCell.SetAndColor(jobType . " Created.", xl_LightGreen)
 		} else {
-			entry.SetStatus("Discovery Job Name does match Process Job Name.", 46)
+			entry.StatusCell.SetAndColor("Discovery Job Name does match Process Job Name.", xl_Orange)
 			window.CancelButton.Click()
 		}
 	} else {
-		entry.SetStatus("Discovery Job ID not found.", 46)
+		entry.StatusCell.SetAndColor("Discovery Job ID not found.", xl_Orange)
 		window.CancelButton.Click()
 	}
 }
