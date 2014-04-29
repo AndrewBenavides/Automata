@@ -1,7 +1,7 @@
 ﻿#Include .\lib\Excel\BaseJobLog.ahk
 
 class ProcessTaglistJobLog extends BaseJobLog {
-	HeaderRow := 8
+	HeaderRow := 9
 	
 	GetEntry(row) {
 		entry := new ProcessTaglistJobLogEntry(this, row)
@@ -9,18 +9,17 @@ class ProcessTaglistJobLog extends BaseJobLog {
 	}
 	
 	GetProperties() {
-		this.Client := this.GetProperty("Client")
-		this.Project := this.GetProperty("Project")
-		this.TaglistDirectory := this.GetProperty("Taglist Directory")
-		this.SelectChildren := this.ConvertExcelBool(this.GetProperty("Select Children"))
-		this.ChildItemHandling := this.GetProperty("Child Item Handling")
+		this.Properties.TaglistDirectory := this.GetProperty("Taglist Directory")
+		this.Properties.SelectChildren := this.ConvertExcelBool(this.GetProperty("Select Children"))
+		this.Properties.ChildItemHandling := this.GetProperty("Child Item Handling")
+		this.Properties.JobType := this.GetProperty("Job Type")
 	}
 }
 
 class ProcessTaglistJobLogEntry extends BaseLogEntry {
 	GetProperties() {
 		this.TaglistName := this.JobName . ".txt"
-		this.TaglistFullName := this.Log.TaglistDirectory . "\" . this.TaglistName
+		this.TaglistFullName := this.TaglistDirectory . "\" . this.TaglistName
 		
 		this.TaglistCountCell := this.GetCell("Taglist Count")
 		this.AddedCountCell := this.GetCell("Added Count")

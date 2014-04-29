@@ -2,7 +2,6 @@
 global xl_LightGreen := 35
 global xl_Clear := -4105
 
-
 class Range {
 	xlValues := -4163
 	xlWhole := 1

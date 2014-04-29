@@ -7,6 +7,7 @@ class BaseJobLog {
 		this.Header := this.GetHeader(this.HeaderRow . ":" . this.HeaderRow)
 		this.PropertiesRange := this.GetRange("A1:B" . (this.HeaderRow - 2))
 		this.Extend()
+		this.GetBaseProperties()
 		this.GetProperties()
 	}
 	
@@ -41,6 +42,12 @@ class BaseJobLog {
 		return entries
 	}
 	
+	GetBaseProperties() {
+		this.Properties := {}
+		this.Properties.Client := this.GetProperty("Client")
+		this.Properties.Project := this.GetProperty("Project")
+	}
+	
 	GetProperty(name) {
 		range := this.PropertiesRange.Find(name)
 		if (range <> "") {
@@ -72,12 +79,15 @@ class BaseLogEntry {
 		this.Row := row
 		this.Log := jobLog
 		
-		this.JobName := this.GetProperty("Job Name")
-		this.CustodianOverride := this.GetProperty("Custodian Override")
-		this.Custodian := this.ParseCustodian()
-		this.StatusCell := this.GetCell("Status")
-		
+		this.CopyParentProperties()
+		this.GetBaseProperties()
 		this.GetProperties()
+	}
+	
+	CopyParentProperties() {
+		for key, value in this.Log.Properties {
+			this[key] := value
+		}
 	}
 	
 	GetCell(name) {
@@ -85,6 +95,13 @@ class BaseLogEntry {
 		cell := this.Log.Worksheet.Cells(this.Row, column)
 		range := new Range(this.Log.Worksheet, cell.Address)
 		return range
+	}
+	
+	GetBaseProperties() {
+		this.JobName := this.GetProperty("Job Name")
+		this.CustodianOverride := this.GetProperty("Custodian Override")
+		this.Custodian := this.ParseCustodian()
+		this.StatusCell := this.GetCell("Status")
 	}
 	
 	GetProperty(name) {

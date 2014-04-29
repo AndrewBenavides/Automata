@@ -19,6 +19,7 @@ SetKeyDelay 125, 125
 #Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
 #Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
+#Include .\lib\eCapture\Controller\DataExtractJobOptionsWindow.ahk
 
 ProcessLog() {
 	MouseMove, 1, 1, 0
@@ -30,19 +31,19 @@ ProcessLog() {
 		counts.File := entry.GetTaglistCount()
 		if IsNumber(counts.File) {
 			if (counts.File > 0) {
-				custodian := TargetCustodian(jobLog, controller, entry)
+				custodian := TargetCustodian(controller, entry)
 				if custodian.Exists {
-					processingJobWindow := custodian.NewProcessingJob()
+					processingJobWindow := GetNewJobWindow(entry, custodian)
 					ConfigureProcessingJob(processingJobWindow, entry)
 					counts.Added := GetAddedCount()
-					counts := CreateFilterAndGetCounts(counts)
+					counts := CreateFilterAndGetCounts(counts, entry)
 					LogCount(entry, counts)
 				} else {
 					entry.StatusCell.SetAndColor("Custodian not found.", xl_Orange)
 				}
 			}
 		} else {
-			entry.StatusCell.Value2 := fileCount
+			entry.StatusCell.SetAndColor(counts.File, xl_Orange)
 		}
 	}
 }
@@ -56,9 +57,9 @@ IsNumber(num) {
 	}
 }
 
-TargetCustodian(jobLog, controller, entry) {
-	client := controller.Clients[jobLog.Client]
-	project := client.Projects[jobLog.Project]
+TargetCustodian(controller, entry) {
+	client := controller.Clients[entry.Client]
+	project := client.Projects[entry.Project]
 	custodian := {}
 	try {
 		custodian := project.Custodians[entry.Custodian]
@@ -69,12 +70,24 @@ TargetCustodian(jobLog, controller, entry) {
 	return custodian
 }
 
+GetNewJobWindow(entry, custodian) {
+	if (entry.JobType = "Processing Jobs") {
+		window := custodian.NewProcessingJob()
+	} else if (entry.JobType = "Data Extract Jobs") {
+		window := custodian.NewDataExtractJob()
+	} else {
+		message := "Job Type """ . entry.JobType . " is not supported."
+		throw message
+	}	
+	return window
+}
+
 ConfigureProcessingJob(window, entry) {
 	window.Type["DataExtractImport"].Set()
 	window.Name.Set(entry.JobName)
 	window.ItemIdFilePath.Set(entry.TaglistFullName)
-	window.SelectChildren.Set(entry.Log.SelectChildren)
-	window.ChildItemHandling[entry.Log.ChildItemHandling].Set()
+	window.SelectChildren.Set(entry.SelectChildren)
+	window.ChildItemHandling[entry.ChildItemHandling].Set()
 	window.OkButton.Click()
 }
 
@@ -84,16 +97,20 @@ GetAddedCount() {
 	return addedCount
 }
 
-CreateFilterAndGetCounts(counts) {
-	OpenFilteringOptions()
+CreateFilterAndGetCounts(counts, entry) {
+	OpenFilteringOptions(entry)
 	filteringCounts := CreateFilteringRules()
 	counts.Parents := filteringCounts.ParentCount
 	counts.Children := filteringCounts.ChildCount
 	return counts
 }
 
-OpenFilteringOptions() {
-	window := new ProcessingJobOptionsWindow()
+OpenFilteringOptions(entry) {
+	if (entry.JobType = "Processing Jobs") {
+		window := new ProcessingJobOptionsWindow()
+	} else {
+		window := new DataExtractJobOptionsWindow()
+	}
 	tries := 0
 	filterWindow := {}
 	filterWindow.Exists := false
@@ -104,7 +121,6 @@ OpenFilteringOptions() {
 		tries += 1
 	}
 	window.OkButton.Click() 
-	;Create dismiss method on base Window class?
 }
 
 CreateFilteringRules() {
