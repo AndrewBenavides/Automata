@@ -1,6 +1,7 @@
-﻿#Include .\lib\ex\RemoteTreeView\RemoteTreeViewClass.ahk
+﻿#Include .\lib\BasicControls\Controls.ahk
+#Include .\lib\eCapture\Controller\NewCustodianWindow.ahk
+#Include .\lib\eCapture\Controller\NewDiscoveryJobWindow.ahk
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
-#Include .\lib\BasicControls\Controls.ahk
 
 class ClientManagementTreeView extends TreeView {
 	AddChild(item) {
@@ -38,6 +39,11 @@ class ClientManagementTreeView extends TreeView {
 		}
 		return name
 	}
+	
+	Refresh() {
+		this.Unload()
+		this.Load()
+	}
 		
 	class Client extends ClientManagementTreeView {		
 		GetNewChild(item) {
@@ -59,6 +65,24 @@ class ClientManagementTreeView extends TreeView {
 		GetChildrenName() {
 			return "Custodians"
 		}
+		
+		NewCustodian() {
+			window := {}
+			window.Exists := false
+			tries := 0
+			while (!window.Exists && tries < 5) {
+				WinActivate, % this.WindowId
+				ControlFocus, , % this.ControlId
+				this.Select()
+				SendInput, {Escape}{Escape}{AppsKey}{AppsKey}
+				Sleep (1 + (tries * 100))
+				SendInput, {Down}{Enter}
+				tries += 1
+				Sleep (1 + (tries * 100))
+				window := new NewCustodianWindow(2)
+			}
+			return window
+		}
 	}
 	
 	class Custodian extends ClientManagementTreeView {
@@ -71,20 +95,39 @@ class ClientManagementTreeView extends TreeView {
 			return "Folders"
 		}
 		
+		NewDataExtractJob() {
+			wdw := this.NewJob("Data Extract Jobs")
+			return wdw
+		}
+		
+		NewDiscoveryJob() {
+			wdw := this.NewJob("Discovery Jobs")
+			return wdw
+		}
+		
 		NewProcessingJob() {
+			wdw := this.NewJob("Processing Jobs")
+			return wdw
+		}
+		
+		NewJob(jobType) {
 			wdw := {}
 			wdw.Exists := False
 			tries := 0
 			while (!wdw.Exists && tries < 5) {
 				WinActivate, % this.WindowId
 				ControlFocus, , % this.ControlId
-				this[this.ChildrenName]["Processing Jobs"].Select()
+				this[this.ChildrenName][jobType].Select()
 				SendInput, {Escape}{Escape}{AppsKey}{AppsKey}
 				Sleep (1 + (tries * 100))
 				SendInput, {Down}{Enter}
 				tries += 1
 				Sleep (1 + (tries * 100))
-				wdw := new NewProcessJobWindow(2)
+				if (jobType = "Discovery Jobs") {
+					wdw := new NewDiscoveryJobWindow(2)
+				} else {
+					wdw := new NewProcessJobWindow(2)
+				}
 			}
 			return wdw
 		}

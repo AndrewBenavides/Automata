@@ -26,6 +26,7 @@ class NewProcessJobWindow extends Window {
 		this.ShowJobOptions := this.BindCheckBox("WindowsForms10.BUTTON.app.0.11ecf053")
 		this.ExpediteJob := this.BindCheckBox("WindowsForms10.BUTTON.app.0.11ecf054")
 		this.OkButton := this.BindButton("WindowsForms10.BUTTON.app.0.11ecf057")
+		this.CancelButton := this.BindButton("WindowsForms10.BUTTON.app.0.11ecf058")
 		this.TaskTable := this.BindDropDownBox("WindowsForms10.COMBOBOX.app.0.11ecf051")
 	}
 	

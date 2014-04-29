@@ -10,7 +10,7 @@ class DiscoveryJobListView extends ListView {
 		this.Values := values
 	}
 	
-	__Get(jobId) {
+	GetByID(jobId) {
 		exists := this.Values.HasKey(jobId)
 		if (!exists) {
 			throw "DiscoveryJobID " . jobId . " does not exist."
@@ -20,6 +20,11 @@ class DiscoveryJobListView extends ListView {
 	
 	CheckAll() {
 		this.SelectAll(true)
+	}
+	
+	HasID(jobId) {
+		exists := this.Values.HasKey(jobId)
+		return exists
 	}
 	
 	SelectAll(state = true) {

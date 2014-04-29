@@ -11,19 +11,19 @@ SetKeyDelay 125, 125
 
 ; Includes from lib
 #Include %A_ScriptDir%
-
-#Include .\lib\Excel\ProcessingJobTaglistLog.ahk
+#Include .\lib\Excel\ProcessTaglistJobLog.ahk
 #Include .\lib\eCapture\Controller\Controller.ahk
 #Include .\lib\eCapture\Controller\ClientManagementTreeView.ahk
 #Include .\lib\eCapture\Controller\FlexProcessorOptionsWindow.ahk
 #Include .\lib\eCapture\Controller\ImportFromFileWindow.ahk
 #Include .\lib\eCapture\Controller\NewProcessJobWindow.ahk
 #Include .\lib\eCapture\Controller\ProcessingJobOptionsWindow.ahk
+#Include .\lib\eCapture\Controller\DataExtractJobOptionsWindow.ahk
 
 ProcessLog() {
 	MouseMove, 1, 1, 0
 	controller := new Controller()
-	jobLog := new JobLog()
+	jobLog := new ProcessTaglistJobLog()
 	entries := jobLog.GetEntries()
 	for key, entry in entries {
 		counts := {}
@@ -32,18 +32,17 @@ ProcessLog() {
 			if (counts.File > 0) {
 				custodian := TargetCustodian(controller, entry)
 				if custodian.Exists {
-					options := GetOptions(entry)
-					processingJobWindow := custodian.NewProcessingJob()
-					ConfigureProcessingJob(processingJobWindow, options)
+					processingJobWindow := GetNewJobWindow(entry, custodian)
+					ConfigureProcessingJob(processingJobWindow, entry)
 					counts.Added := GetAddedCount()
-					counts := CreateFilterAndGetCounts(counts)
+					counts := CreateFilterAndGetCounts(counts, entry)
 					LogCount(entry, counts)
 				} else {
-					entry.StatusCell.Value2 := "Custodian not found."
+					entry.StatusCell.SetAndColor("Custodian not found.", xl_Orange)
 				}
 			}
 		} else {
-			entry.StatusCell.Value2 := fileCount
+			entry.StatusCell.SetAndColor(counts.File, xl_Orange)
 		}
 	}
 }
@@ -58,8 +57,8 @@ IsNumber(num) {
 }
 
 TargetCustodian(controller, entry) {
-	client := controller.Clients[jobLog.Client]
-	project := client.Projects[jobLog.Project]
+	client := controller.Clients[entry.Client]
+	project := client.Projects[entry.Project]
 	custodian := {}
 	try {
 		custodian := project.Custodians[entry.Custodian]
@@ -70,21 +69,24 @@ TargetCustodian(controller, entry) {
 	return custodian
 }
 
-GetOptions(entry) {
-	name := entry.JobName
-	filePath := entry.TaglistFullName
-	selectChildren := entry.JobLog.SelectChildren
-	childItemHandling := entry.JobLog.ChildItemHandling
-	options := new ProcessingJobTaglistOptions(name, filePath, selectChildren, childItemHandling)
-	return options
+GetNewJobWindow(entry, custodian) {
+	if (entry.JobType = "Processing Jobs") {
+		window := custodian.NewProcessingJob()
+	} else if (entry.JobType = "Data Extract Jobs") {
+		window := custodian.NewDataExtractJob()
+	} else {
+		message := "Job Type """ . entry.JobType . " is not supported."
+		throw message
+	}	
+	return window
 }
 
-ConfigureProcessingJob(window, options) {
+ConfigureProcessingJob(window, entry) {
 	window.Type["DataExtractImport"].Set()
-	window.Name.Set(options.Name)
-	window.ItemIdFilePath.Set(options.FilePath)
-	window.SelectChildren.Set(options.SelectChildren)
-	window.ChildItemHandling[options.ChildItemHandling].Set()
+	window.Name.Set(entry.JobName)
+	window.ItemIdFilePath.Set(entry.TaglistFullName)
+	window.SelectChildren.Set(entry.SelectChildren)
+	window.ChildItemHandling[entry.ChildItemHandling].Set()
 	window.OkButton.Click()
 }
 
@@ -94,16 +96,20 @@ GetAddedCount() {
 	return addedCount
 }
 
-CreateFilterAndGetCounts(counts) {
-	OpenFilteringOptions()
+CreateFilterAndGetCounts(counts, entry) {
+	OpenFilteringOptions(entry)
 	filteringCounts := CreateFilteringRules()
 	counts.Parents := filteringCounts.ParentCount
 	counts.Children := filteringCounts.ChildCount
 	return counts
 }
 
-OpenFilteringOptions() {
-	window := new ProcessingJobOptionsWindow()
+OpenFilteringOptions(entry) {
+	if (entry.JobType = "Processing Jobs") {
+		window := new ProcessingJobOptionsWindow()
+	} else {
+		window := new DataExtractJobOptionsWindow()
+	}
 	tries := 0
 	filterWindow := {}
 	filterWindow.Exists := false
@@ -114,7 +120,6 @@ OpenFilteringOptions() {
 		tries += 1
 	}
 	window.OkButton.Click() 
-	;Create dismiss method on base Window class?
 }
 
 CreateFilteringRules() {
@@ -150,15 +155,15 @@ ValidateChildren(wdw) {
 }
 
 LogCount(entry, counts) {
-	entry.TaglistCountCell.Value2 := counts.File
-	entry.AddedCountCell.Value2 := counts.Added
-	entry.ParentCountCell.Value2 := counts.Parents
-	entry.ChildCountCell.Value2 := counts.Children
+	entry.TaglistCountCell.Set(counts.File)
+	entry.AddedCountCell.Set(counts.Added)
+	entry.ParentCountCell.Set(counts.Parents)
+	entry.ChildCountCell.Set(counts.Children)
 
 	if (counts.Parents > 0) {
-		entry.StatusCell.Value2 := "Added"
+		entry.StatusCell.SetAndColor("Added", xl_LightGreen)
 	} else {
-		entry.StatusCell.Value2 := "Error?"
+		entry.StatusCell.SetAndColor("Error?", xl_Orange)
 	}
 }
 
